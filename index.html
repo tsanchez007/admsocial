@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SocialApp — Gestor de Redes</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════ SIDEBAR -->
+
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <span class="logo-icon">◈</span>
+    <span class="logo-text">SocialApp</span>
+  </div>
+
+  <nav class="sidebar-nav">
+    <button class="nav-item active" data-section="dashboard">
+      <span class="nav-icon">✦</span>
+      <span>Dashboard</span>
+    </button>
+    <button class="nav-item" data-section="scheduled">
+      <span class="nav-icon">📅</span>
+      <span>Programados</span>
+      <span class="badge" id="scheduledBadge" style="display:none">0</span>
+    </button>
+    <button class="nav-item" data-section="stats">
+      <span class="nav-icon">📊</span>
+      <span>Estadísticas</span>
+    </button>
+    <button class="nav-item" data-section="accounts">
+      <span class="nav-icon">🔗</span>
+      <span>Cuentas</span>
+    </button>
+  </nav>
+
+  <div class="sidebar-bottom">
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙</button>
+  </div>
+</aside>
+
+<!-- ═══════════════════════════════════════════ MAIN -->
+
+<main class="main">
+
+  <!-- ─── DASHBOARD ─── -->
+
+  <section class="section active" id="dashboard">
+    <div class="section-header">
+      <h1>Nueva Publicación</h1>
+      <p>Crea y programa contenido para tus redes sociales</p>
+    </div>
+
+
+<div class="compose-grid">
+  <!-- Upload -->
+  <div class="card upload-card">
+    <h2>Imagen</h2>
+    <div class="upload-area" id="uploadArea">
+      <img id="imagePreview" src="" alt="preview" style="display:none">
+      <div class="upload-placeholder" id="uploadPlaceholder">
+        <div class="upload-icon">🖼</div>
+        <p>Arrastra una imagen o haz clic</p>
+        <span>JPG, PNG, GIF · Max 10MB</span>
+      </div>
+    </div>
+    <input type="file" id="fileInput" accept="image/*" hidden>
+    <button class="btn-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+      Seleccionar imagen
+    </button>
+  </div>
+
+  <!-- Texto -->
+  <div class="card text-card">
+    <h2>Texto</h2>
+    <div class="textarea-wrap">
+      <textarea 
+        id="postText" 
+        placeholder="Escribe el texto de tu publicación... #hashtag @menciones"
+        rows="6"
+        maxlength="2200"
+      ></textarea>
+      <div class="char-counter">
+        <span id="charCounter">0</span> / 2200
+      </div>
+    </div>
+
+    <div class="networks-row">
+      <label class="network-check instagram">
+        <input type="checkbox" id="instagramCheck" checked>
+        <span class="network-icon">📸</span>
+        Instagram
+      </label>
+      <label class="network-check facebook">
+        <input type="checkbox" id="facebookCheck">
+        <span class="network-icon">📘</span>
+        Facebook
+      </label>
+    </div>
+
+    <div class="schedule-row">
+      <label>Fecha y hora</label>
+      <input type="datetime-local" id="scheduleDate" class="date-input">
+    </div>
+
+    <button class="btn-primary" id="scheduleBtn" onclick="schedulePost()">
+      ✦ Programar Ahora
+    </button>
+  </div>
+</div>
+
+
+  </section>
+
+  <!-- ─── PROGRAMADOS ─── -->
+
+  <section class="section" id="scheduled">
+    <div class="section-header">
+      <h1>Publicaciones Programadas</h1>
+      <p>Gestiona y revisa el contenido en cola</p>
+    </div>
+    <div class="posts-list" id="postsList">
+      <div class="loading">Cargando...</div>
+    </div>
+  </section>
+
+  <!-- ─── ESTADÍSTICAS ─── -->
+
+  <section class="section" id="stats">
+    <div class="section-header">
+      <h1>Estadísticas</h1>
+      <p>Resumen de tu actividad en la plataforma</p>
+    </div>
+
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-number" id="statTotal">0</div>
+    <div class="stat-label">Total Posts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statPending">0</div>
+    <div class="stat-label">Pendientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statPublished">0</div>
+    <div class="stat-label">Publicados</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statIG">0</div>
+    <div class="stat-label">En Instagram</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statFB">0</div>
+    <div class="stat-label">En Facebook</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statAccounts">0</div>
+    <div class="stat-label">Cuentas</div>
+  </div>
+</div>
+
+
+  </section>
+
+  <!-- ─── CUENTAS ─── -->
+
+  <section class="section" id="accounts">
+    <div class="section-header">
+      <h1>Cuentas Conectadas</h1>
+      <p>Administra tus perfiles de Instagram y Facebook</p>
+    </div>
+
+
+<div class="accounts-actions">
+  <button class="btn-primary btn-connect" onclick="connectFacebook()">
+    <span>🔗</span>
+    Conectar con Facebook / Instagram
+  </button>
+  <button class="btn-secondary" onclick="loadAccounts()">
+    ↻ Actualizar
+  </button>
+</div>
+
+<div class="info-banner">
+  <span class="info-icon">ℹ️</span>
+  <div>
+    <strong>¿Cómo funciona?</strong>
+    Al hacer clic en "Conectar", se abrirá el login oficial de Facebook. 
+    Puedes seleccionar tus páginas e Instagram Business para administrarlos desde SocialApp.
+  </div>
+</div>
+
+<div id="accountsList" class="accounts-list">
+  <div class="loading">Cargando cuentas...</div>
+</div>
+
+
+  </section>
+
+</main>
+
+<!-- Toast container -->
+
+<div id="toastContainer"></div>
+
+<script src="script.js"></script>
+
+</body>
+</html>
