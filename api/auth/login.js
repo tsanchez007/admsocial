@@ -3,7 +3,7 @@ export default function handler(req, res) {
     const apiVersion = process.env.META_API_VERSION || 'v19.0';
     const frontendUrl = process.env.FRONTEND_URL;
 
-    const scope = ['pages_show_list', 'pages_read_engagement', 'pages_manage_posts', 'public_profile'].join(',');
+    const scope = ['public_profile', 'email'].join(',');
 
     const redirectUri = encodeURIComponent(`${frontendUrl}/api/auth/callback`);
     const url = `https://www.facebook.com/${apiVersion}/dialog/oauth?client_id=${appId}&redirect_uri=${redirectUri}&scope=${scope}&response_type=code`;
