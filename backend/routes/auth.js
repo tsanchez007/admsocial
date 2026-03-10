@@ -3,6 +3,9 @@ const axios   = require('axios');
 const db      = require('../database');
 const router  = express.Router();
 
+const REDIRECT_URI = process.env.REDIRECT_URI || 'http://localhost:3000/api/auth/callback';
+const FRONTEND_URL = process.env.FRONTEND_URL || 'http://localhost:3000';
+
 router.get('/login', (req, res) => {
     const scope = [
         'pages_manage_posts',
@@ -12,9 +15,8 @@ router.get('/login', (req, res) => {
         'pages_show_list',
         'public_profile'
     ].join(',');
-    
-    const url = `https://www.facebook.com/${process.env.META_API_VERSION}/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent('http://localhost:3000/api/auth/callback')}&scope=${scope}&response_type=code`;
-    console.log('[AUTH] Redirigiendo a Meta...');
+
+    const url = `https://www.facebook.com/${process.env.META_API_VERSION}/dialog/oauth?client_id=${process.env.META_APP_ID}&redirect_uri=${encodeURIComponent(REDIRECT_URI)}&scope=${scope}&response_type=code`;
     res.redirect(url);
 });
 
@@ -27,39 +29,38 @@ router.get('/callback', async (req, res) => {
             params: {
                 client_id: process.env.META_APP_ID,
                 client_secret: process.env.META_APP_SECRET,
-                redirect_uri: 'http://localhost:3000/api/auth/callback',
+                redirect_uri: REDIRECT_URI,
                 code
             }
         });
 
         const userToken = tokenRes.data.access_token;
-        console.log('[AUTH] Token obtenido. Buscando páginas...');
 
         const accountsRes = await axios.get(`https://graph.facebook.com/${process.env.META_API_VERSION}/me/accounts`, {
-            params: { 
+            params: {
                 access_token: userToken,
-                fields: 'name,access_token,id,instagram_business_account{id,username,name,profile_picture_url}' 
+                fields: 'name,access_token,id,instagram_business_account{id,username,name,profile_picture_url}'
             }
         });
 
         const pages = accountsRes.data.data || [];
-        console.log(`[AUTH] Se encontraron ${pages.length} páginas.`);
 
         for (const page of pages) {
-            // Guardar Página de Facebook
-            db.prepare('INSERT OR REPLACE INTO accounts (platform, username, access_token, page_id, status) VALUES (?, ?, ?, ?, ?)')
-              .run('facebook', page.name, page.access_token, page.id, 'active');
+            await db.query(
+                'INSERT INTO accounts (platform, username, access_token, page_id, status) VALUES (?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE access_token=VALUES(access_token)',
+                ['facebook', page.name, page.access_token, page.id, 'connected']
+            );
 
-            // Guardar Instagram si está vinculado
             if (page.instagram_business_account) {
                 const ig = page.instagram_business_account;
-                db.prepare('INSERT OR REPLACE INTO accounts (platform, username, access_token, page_id, ig_account_id, status) VALUES (?, ?, ?, ?, ?, ?)')
-                  .run('instagram', ig.username, page.access_token, page.id, ig.id, 'active');
-                console.log(`[AUTH] Instagram detectado: @${ig.username}`);
+                await db.query(
+                    'INSERT INTO accounts (platform, username, access_token, page_id, ig_account_id, status) VALUES (?, ?, ?, ?, ?, ?) ON DUPLICATE KEY UPDATE access_token=VALUES(access_token)',
+                    ['instagram', ig.username, page.access_token, page.id, ig.id, 'connected']
+                );
             }
         }
 
-        res.redirect('http://localhost:3000/?connected=true');
+        res.redirect(`${FRONTEND_URL}/?connected=true`);
     } catch (err) {
         console.error('[AUTH ERROR]', err.response?.data || err.message);
         res.status(500).send('Error procesando el login');
