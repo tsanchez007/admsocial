@@ -308,7 +308,7 @@ function exportPDF() {
         const mediaHtml = mediaRaw
             ? isVideo
                 ? `<video src="${mediaRaw}" controls style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;"></video>`
-                : `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;">`
+                : `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" onclick="window.open('${mediaRaw}', '_blank')" title="Clic para ver en tamaño completo">`
             : '<div style="width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Sin imagen</div>';
 
         const partes = [];
