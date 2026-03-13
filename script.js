@@ -223,6 +223,12 @@ function saveExportSettings() {
     exportSettings.showTexto       = document.getElementById('showTexto').checked;
     localStorage.setItem('exportSettings', JSON.stringify(exportSettings));
     showToast('Ajustes guardados ✅', 'success');
+    setTimeout(() => {
+        document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
+        document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+        document.querySelector('.nav-item[data-section="dashboard"]').classList.add('active');
+        document.getElementById('dashboard').classList.add('active');
+    }, 800);
 }
 
 function loadExportSettingsUI() {
@@ -301,8 +307,8 @@ function exportPDF() {
         const isVideo = mediaRaw.startsWith('data:video') || mediaRaw.match(/\.(mp4|mov|webm)/i);
         const mediaHtml = mediaRaw
             ? isVideo
-                ? `<video src="${mediaRaw}" controls style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid #ddd;"></video>`
-                : `<img src="${mediaRaw}" style="width:100%;max-height:200px;object-fit:cover;border-radius:8px;border:1px solid #ddd;">`
+                ? `<video src="${mediaRaw}" controls style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;"></video>`
+                : `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;">`
             : '<div style="width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Sin imagen</div>';
 
         const partes = [];
