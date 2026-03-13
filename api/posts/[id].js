@@ -8,31 +8,15 @@ export default async function handler(req, res) {
         database: process.env.DB_NAME,
     });
 
+    const { id } = req.query;
+
     try {
         if (req.method === 'GET') {
-            const id = req.url.split('/').filter(Boolean).pop();
-            if (id && !isNaN(id)) {
-                const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [id]);
-                return res.json(rows[0] || {});
-            }
-            const [posts] = await db.query('SELECT * FROM publicaciones ORDER BY fecha_programada ASC');
-            return res.json({ success: true, posts });
-        }
-
-        if (req.method === 'POST') {
-            const { text, scheduled_at, instagram, facebook, image_base64 } = req.body;
-            if (!scheduled_at) return res.status(400).json({ success: false, error: 'La fecha es requerida' });
-            const plataformas = [instagram ? 'instagram' : '', facebook ? 'facebook' : ''].filter(Boolean).join(',');
-            const [result] = await db.query(
-                'INSERT INTO publicaciones (titulo, contenido, imagen_url, plataformas, fecha_programada, estado) VALUES (?, ?, ?, ?, ?, ?)',
-                ['', text || '', image_base64 || null, plataformas, scheduled_at, 'pendiente']
-            );
-            const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [result.insertId]);
-            return res.json({ success: true, post: rows[0] });
+            const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [id]);
+            return res.json(rows[0] || {});
         }
 
         if (req.method === 'PATCH') {
-            const id = req.url.split('/').pop();
             const { contenido, fecha_programada, image_base64 } = req.body;
             const fields = ['contenido = ?', 'fecha_programada = ?'];
             const values = [contenido, fecha_programada];
@@ -44,7 +28,6 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'DELETE') {
-            const id = req.url.split('/').pop();
             await db.query('DELETE FROM publicaciones WHERE id = ?', [id]);
             return res.json({ success: true });
         }

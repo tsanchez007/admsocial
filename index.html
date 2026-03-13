@@ -58,18 +58,20 @@
 <div class="compose-grid">
   <!-- Upload -->
   <div class="card upload-card">
-    <h2>Imagen</h2>
+    <h2>Imagen / Video</h2>
+    <div id="dimensionInfo" style="font-size:0.78rem;color:var(--accent);margin-bottom:6px;min-height:18px;"></div>
     <div class="upload-area" id="uploadArea">
-      <img id="imagePreview" src="" alt="preview" style="display:none">
+      <img id="imagePreview" src="" alt="preview" style="display:none;max-width:100%;max-height:220px;border-radius:8px;">
+      <video id="videoPreview" controls playsinline style="display:none;max-width:100%;max-height:220px;border-radius:8px;"></video>
       <div class="upload-placeholder" id="uploadPlaceholder">
-        <div class="upload-icon">🖼</div>
-        <p>Arrastra una imagen o haz clic</p>
-        <span>JPG, PNG, GIF · Max 10MB</span>
+        <div class="upload-icon" id="uploadIcon">🖼</div>
+        <p id="uploadHint">Arrastra una imagen o video y haz clic</p>
+        <span id="uploadSpec">JPG, PNG, GIF, MP4 · Max 50MB</span>
       </div>
     </div>
-    <input type="file" id="fileInput" accept="image/*" hidden>
+    <input type="file" id="fileInput" accept="image/*,video/*" hidden>
     <button class="btn-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
-      Seleccionar imagen
+      Seleccionar imagen o video
     </button>
   </div>
 
@@ -88,9 +90,9 @@
       </div>
     </div>
 
-    <div class="networks-row">
+    <div class="accounts-select-row" style="margin-bottom:16px"><label style="display:block;margin-bottom:8px;font-weight:600">Cuenta</label><select id="accountSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px"><option value="">Cargando cuentas...</option></select></div><div class="networks-row">
       <label class="network-check instagram">
-        <input type="checkbox" id="instagramCheck" checked>
+        <input type="checkbox" id="instagramCheck">
         <span class="network-icon">📸</span>
         Instagram
       </label>
@@ -101,9 +103,27 @@
       </label>
     </div>
 
+    <!-- Selector de tipo de publicación -->
+    <div id="tipoPublicacionRow" style="display:none;margin:12px 0;">
+      <label style="display:block;margin-bottom:8px;font-weight:600;">Tipo de publicación</label>
+      <div id="tipoOpciones" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div id="dimensionLabel" style="font-size:0.78rem;color:var(--accent);margin-top:6px;"></div>
+    </div>
+
     <div class="schedule-row">
       <label>Fecha y hora</label>
-      <input type="datetime-local" id="scheduleDate" class="date-input">
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <input type="date" id="scheduleDate" class="date-input" style="flex:1">
+  <select id="scheduleHour" class="date-input" style="flex:0 0 80px">
+    <option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option>
+  </select>:
+  <select id="scheduleMin" class="date-input" style="flex:0 0 70px">
+    <option>00</option><option>15</option><option>30</option><option>45</option>
+  </select>
+  <select id="scheduleAmPm" class="date-input" style="flex:0 0 70px">
+    <option>AM</option><option>PM</option>
+  </select>
+</div>
     </div>
 
     <button class="btn-primary" id="scheduleBtn" onclick="schedulePost()">
@@ -207,7 +227,7 @@
 
 <div id="toastContainer"></div>
 
-<script src="script.js"></script>
+<script src="script.js?v=2"></script>
 
 </body>
 </html>

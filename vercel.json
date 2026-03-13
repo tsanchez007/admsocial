@@ -4,6 +4,7 @@
     { "source": "/api/auth/login", "destination": "/api/auth/login" },
     { "source": "/api/auth/callback", "destination": "/api/auth/callback" },
     { "source": "/api/accounts", "destination": "/api/accounts" },
+    { "source": "/api/posts/:id", "destination": "/api/posts/[id]" },
     { "source": "/api/posts", "destination": "/api/posts" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
