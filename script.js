@@ -309,7 +309,7 @@ function exportPDF() {
         const mediaHtml = mediaRaw
             ? isVideo
                 ? `<video src="${mediaRaw}" controls style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;"></video>`
-                : (() => { const idx = mediaUrls.push(mediaRaw) - 1; return `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" onclick="openMedia(${idx})" title="Clic para ver en tamaño completo">`; })()
+                : (() => { const idx = mediaUrls.push(mediaRaw) - 1; return `<a href="data:text/html,<img src='${mediaRaw.replace(/'/g,"\\'")}' style='max-width:100%;max-height:100vh;object-fit:contain;display:block;margin:auto;background:%23000;'>" target="_blank" style="display:block;"><img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" title="Clic para ver en tamaño completo"></a>`; })()
             : '<div style="width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Sin imagen</div>';
 
         const partes = [];
