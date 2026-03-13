@@ -301,6 +301,7 @@ function exportPDF() {
                      : 'Todas las fechas';
 
     const win = window.open('', '_blank');
+    const mediaUrls = [];
     const rows = posts.map(post => {
         const fecha = new Date(post.fecha_programada).toLocaleString('es-DO',{dateStyle:'full',timeStyle:'short'});
         const mediaRaw = post.imagen_url || '';
@@ -308,7 +309,7 @@ function exportPDF() {
         const mediaHtml = mediaRaw
             ? isVideo
                 ? `<video src="${mediaRaw}" controls style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;"></video>`
-                : `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" onclick="window.open('${mediaRaw}', '_blank')" title="Clic para ver en tamaño completo">`
+                : (() => { const idx = mediaUrls.push(mediaRaw) - 1; return `<img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" onclick="openMedia(${idx})" title="Clic para ver en tamaño completo">`; })()
             : '<div style="width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Sin imagen</div>';
 
         const partes = [];
@@ -326,9 +327,14 @@ function exportPDF() {
     const coverHtml = coverBase64 ? `<img src="${coverBase64}" style="width:100%;height:312px;object-fit:cover;border-radius:12px;margin-bottom:24px;display:block;">` : '';
     const footerHtml = pdfFooter ? `<div style="margin-top:40px;padding-top:16px;border-top:1px solid #e0e0e0;text-align:center;color:#aaa;font-size:0.8rem;">${pdfFooter}</div>` : '';
 
+    const mediaUrlsJson = JSON.stringify(mediaUrls);
     win.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8"><title>${pdfTitle}</title>
     <style>body{font-family:'Segoe UI',sans-serif;padding:40px;max-width:900px;margin:0 auto;background:#fafafa;}h1{color:#6c63ff;margin-bottom:4px;font-size:1.6rem;}.cuenta{color:#333;font-size:1rem;font-weight:600;margin-bottom:2px;}.rango{color:#6c63ff;font-size:0.95rem;margin-bottom:4px;}.subtitle{color:#aaa;margin-bottom:32px;font-size:0.85rem;}@media print{body{padding:20px;}}</style>
-    </head><body>${coverHtml}<h1>📅 ${pdfTitle}</h1><div class="cuenta">👤 ${cuentasTitulo}</div><div class="rango">🗓 ${rangoTexto}</div><p class="subtitle">${posts.length} publicación${posts.length !== 1 ? 'es' : ''}</p>${rows}${footerHtml}<script>window.onload=()=>window.print();<\/script></body></html>`);
+    </head><body>${coverHtml}<h1>📅 ${pdfTitle}</h1><div class="cuenta">👤 ${cuentasTitulo}</div><div class="rango">🗓 ${rangoTexto}</div><p class="subtitle">${posts.length} publicación${posts.length !== 1 ? 'es' : ''}</p>${rows}${footerHtml}<script>
+    const _mediaUrls = ${mediaUrlsJson};
+    function openMedia(idx){ const w=window.open('','_blank'); w.document.write('<img src="'+_mediaUrls[idx]+'" style="max-width:100%;height:auto;">'); w.document.close(); }
+    window.onload=()=>window.print();
+    <\/script></body></html>`);
     win.document.close();
 }
 function renderPosts(posts) {
