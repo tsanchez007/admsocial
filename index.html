@@ -35,6 +35,10 @@
       <span class="nav-icon">🔗</span>
       <span>Cuentas</span>
     </button>
+    <button class="nav-item" data-section="exportSettings">
+      <span class="nav-icon">⚙️</span>
+      <span>Ajustes PDF</span>
+    </button>
   </nav>
 
   <div class="sidebar-bottom">
@@ -117,9 +121,7 @@
   <select id="scheduleHour" class="date-input" style="flex:0 0 80px">
     <option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option>
   </select>:
-  <select id="scheduleMin" class="date-input" style="flex:0 0 70px">
-    <option>00</option><option>15</option><option>30</option><option>45</option>
-  </select>
+  <select id="scheduleMin" class="date-input" style="flex:0 0 70px"><option>00</option><option>01</option><option>02</option><option>03</option><option>04</option><option>05</option><option>06</option><option>07</option><option>08</option><option>09</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option><option>53</option><option>54</option><option>55</option><option>56</option><option>57</option><option>58</option><option>59</option></select>
   <select id="scheduleAmPm" class="date-input" style="flex:0 0 70px">
     <option>AM</option><option>PM</option>
   </select>
@@ -141,6 +143,19 @@
     <div class="section-header">
       <h1>Publicaciones Programadas</h1>
       <p>Gestiona y revisa el contenido en cola</p>
+    </div>
+    <div style="display:flex;gap:12px;align-items:flex-end;flex-wrap:wrap;margin-bottom:1.5rem;">
+      <div>
+        <label style="display:block;font-size:0.8rem;color:var(--text2);margin-bottom:4px;">Desde</label>
+        <input type="date" id="filterFrom" class="date-input" style="width:160px;">
+      </div>
+      <div>
+        <label style="display:block;font-size:0.8rem;color:var(--text2);margin-bottom:4px;">Hasta</label>
+        <input type="date" id="filterTo" class="date-input" style="width:160px;">
+      </div>
+      <button onclick="applyFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;">🔍 Filtrar</button>
+      <button onclick="clearFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;">✕ Limpiar</button>
+      <button onclick="exportPDF()" style="padding:0.65rem 1.2rem;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-left:auto;">📄 Exportar PDF</button>
     </div>
     <div class="posts-list" id="postsList">
       <div class="loading">Cargando...</div>
@@ -219,6 +234,50 @@
 </div>
 
 
+  </section>
+
+
+  <!-- ─── AJUSTES PDF ─── -->
+  <section class="section" id="exportSettings">
+    <div class="section-header">
+      <h1>Ajustes de Exportación PDF</h1>
+      <p>Personaliza cómo se verá tu reporte impreso</p>
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">🖼 Portada</h2>
+      <p class="settings-desc">Imagen tipo banner (820×312px, proporción Facebook)</p>
+      <div id="coverPreviewWrap" style="width:100%;max-width:820px;height:180px;border-radius:12px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:2px dashed var(--border);cursor:pointer;" onclick="document.getElementById('coverInput').click()">
+        <img id="coverPreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+        <span id="coverPlaceholder" style="color:var(--text2);font-size:0.9rem;">📷 Clic para subir imagen de portada</span>
+      </div>
+      <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="previewCover(this)">
+      <button onclick="document.getElementById('coverInput').click()" class="btn-secondary" style="margin-right:8px;">Subir imagen</button>
+      <button onclick="clearCover()" class="btn-secondary">Quitar portada</button>
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">📝 Título del reporte</h2>
+      <input type="text" id="pdfTitle" placeholder="Ej: Programación de Redes Sociales" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">📄 Pie de página</h2>
+      <input type="text" id="pdfFooter" placeholder="Ej: © 2025 Mi Empresa — Confidencial" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">✅ Campos a mostrar en cada post</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <label class="settings-toggle"><input type="checkbox" id="showImage" checked> Imagen / Video</label>
+        <label class="settings-toggle"><input type="checkbox" id="showCuenta" checked> Nombre de cuenta</label>
+        <label class="settings-toggle"><input type="checkbox" id="showFecha" checked> Fecha y hora</label>
+        <label class="settings-toggle"><input type="checkbox" id="showPlataformas" checked> Plataformas (Instagram / Facebook)</label>
+        <label class="settings-toggle"><input type="checkbox" id="showTexto" checked> Texto del post</label>
+      </div>
+    </div>
+
+    <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;">💾 Guardar ajustes</button>
   </section>
 
 </main>

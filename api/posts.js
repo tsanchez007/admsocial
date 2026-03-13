@@ -15,17 +15,17 @@ export default async function handler(req, res) {
                 const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [id]);
                 return res.json(rows[0] || {});
             }
-            const [posts] = await db.query('SELECT * FROM publicaciones ORDER BY fecha_programada ASC');
+            const [posts] = await db.query('SELECT *, cuenta_nombre FROM publicaciones ORDER BY fecha_programada ASC');
             return res.json({ success: true, posts });
         }
 
         if (req.method === 'POST') {
-            const { text, scheduled_at, instagram, facebook, image_base64 } = req.body;
+            const { text, scheduled_at, instagram, facebook, image_base64, cuenta_nombre } = req.body;
             if (!scheduled_at) return res.status(400).json({ success: false, error: 'La fecha es requerida' });
             const plataformas = [instagram ? 'instagram' : '', facebook ? 'facebook' : ''].filter(Boolean).join(',');
             const [result] = await db.query(
-                'INSERT INTO publicaciones (titulo, contenido, imagen_url, plataformas, fecha_programada, estado) VALUES (?, ?, ?, ?, ?, ?)',
-                ['', text || '', image_base64 || null, plataformas, scheduled_at, 'pendiente']
+                'INSERT INTO publicaciones (titulo, contenido, imagen_url, plataformas, fecha_programada, estado, cuenta_nombre) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                ['', text || '', image_base64 || null, plataformas, scheduled_at, 'pendiente', cuenta_nombre || '']
             );
             const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [result.insertId]);
             return res.json({ success: true, post: rows[0] });
