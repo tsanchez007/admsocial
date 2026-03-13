@@ -332,7 +332,7 @@ function exportPDF() {
     <style>body{font-family:'Segoe UI',sans-serif;padding:40px;max-width:900px;margin:0 auto;background:#fafafa;}h1{color:#6c63ff;margin-bottom:4px;font-size:1.6rem;}.cuenta{color:#333;font-size:1rem;font-weight:600;margin-bottom:2px;}.rango{color:#6c63ff;font-size:0.95rem;margin-bottom:4px;}.subtitle{color:#aaa;margin-bottom:32px;font-size:0.85rem;}@media print{body{padding:20px;}}</style>
     </head><body>${coverHtml}<h1>📅 ${pdfTitle}</h1><div class="cuenta">👤 ${cuentasTitulo}</div><div class="rango">🗓 ${rangoTexto}</div><p class="subtitle">${posts.length} publicación${posts.length !== 1 ? 'es' : ''}</p>${rows}${footerHtml}<script>
     const _mediaUrls = ${mediaUrlsJson};
-    function openMedia(idx){ const w=window.open('','_blank'); w.document.write('<img src="'+_mediaUrls[idx]+'" style="max-width:100%;height:auto;">'); w.document.close(); }
+    function openMedia(idx){ const src=_mediaUrls[idx]; const w=window.open('','_blank'); w.document.write('<!DOCTYPE html><html><head><meta charset="UTF-8"><style>body{margin:0;background:#000;display:flex;align-items:center;justify-content:center;min-height:100vh;}img{max-width:100%;max-height:100vh;object-fit:contain;}</style></head><body><img src="'+src+'"></body></html>'); w.document.close(); }
     window.onload=()=>window.print();
     <\/script></body></html>`);
     win.document.close();
