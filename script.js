@@ -474,7 +474,7 @@ async function schedulePost(publishNow = false) {
     }
 
     if (hasError) return;
-    if (!scheduledAt) return showToast('La fecha es requerida', 'error');
+    if (!publishNow && !scheduledAt) return showToast('La fecha es requerida', 'error');
     const cuenta_nombre = accountSelect?.options[accountSelect.selectedIndex]?.text || '';
 
     let image_base64 = null;
