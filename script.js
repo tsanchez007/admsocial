@@ -422,14 +422,14 @@ async function loadAccountsSelect() {
 
 loadAccountsSelect();
 
-async function schedulePost() {
+async function schedulePost(publishNow = false) {
     const text = document.getElementById('postText').value;
     const dateVal = document.getElementById("scheduleDate").value;
     const hour = parseInt(document.getElementById("scheduleHour").value);
     const min = document.getElementById("scheduleMin").value;
     const ampm = document.getElementById("scheduleAmPm").value;
     const hour24 = ampm === "PM" ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
-    const scheduledAt = dateVal + "T" + String(hour24).padStart(2,"0") + ":" + min + ":00";
+    const scheduledAt = publishNow ? new Date(Date.now() - 60000).toISOString().slice(0,19) : dateVal + "T" + String(hour24).padStart(2,"0") + ":" + min + ":00";
     const instagram = document.getElementById('instagramCheck').checked;
     const facebook = document.getElementById('facebookCheck').checked;
     const fileInput = document.getElementById('fileInput');
@@ -684,14 +684,42 @@ async function editPost(id) {
                     <video id="editPreviewVid" controls style="max-width:100%;max-height:200px;border-radius:8px;display:none;"></video>
                 </div>
             </div>
-            <div style="display:flex;gap:8px;justify-content:flex-end;">
+            <div style="display:flex;gap:8px;justify-content:flex-end;flex-wrap:wrap;">
                 <button id="cancelEdit" style="padding:8px 18px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text);cursor:pointer;">Cancelar</button>
                 <button id="saveEdit" style="padding:8px 18px;border-radius:8px;border:none;background:var(--accent);color:white;cursor:pointer;">💾 Guardar</button>
+                <button id="publishNowEdit" style="padding:8px 18px;border-radius:8px;border:none;background:#22c55e;color:white;cursor:pointer;">🚀 Publicar Ahora</button>
             </div>
         </div>
     `;
     document.body.appendChild(modal);
     document.getElementById('cancelEdit').onclick = () => modal.remove();
+
+    document.getElementById('publishNowEdit').onclick = async () => {
+        const nuevoTexto = document.getElementById('editTexto').value;
+        const fileInput = document.getElementById('editImagen');
+        let image_base64 = null;
+        if (fileInput.files[0]) {
+            image_base64 = await new Promise(resolve => {
+                const reader = new FileReader();
+                reader.onload = e => resolve(e.target.result);
+                reader.readAsDataURL(fileInput.files[0]);
+            });
+        }
+        const ahora = new Date(Date.now() - 60000).toISOString().slice(0,16) + ':00';
+        const patchRes = await fetch(`/api/posts/${id}`, {
+            method: 'PATCH',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ contenido: nuevoTexto, fecha_programada: ahora, image_base64, estado: 'pendiente' })
+        });
+        const patchData = await patchRes.json();
+        if (patchData.success) {
+            showToast('🚀 Publicando ahora...', 'success');
+        } else {
+            showToast('❌ Error: ' + (patchData.error || 'desconocido'), 'error');
+        }
+        modal.remove();
+        loadPosts();
+    };
 
     document.getElementById('editImagen').addEventListener('change', function() {
         const file = this.files[0];
