@@ -513,7 +513,17 @@ async function schedulePost(publishNow = false) {
         const res = await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(postData) });
         const data = await res.json();
         if (data.success) {
-            showToast('¡Publicación programada! 🎉', 'success');
+            if (publishNow) {
+                showToast('🚀 Publicando...', 'success');
+                try {
+                    await fetch('/api/publish', {
+                        method: 'GET',
+                        headers: { 'Authorization': 'Bearer ' + (window._cronSecret || 'admsocial-cron-2025') }
+                    });
+                } catch(e) {}
+            } else {
+                showToast('¡Publicación programada! 🎉', 'success');
+            }
             // Reset formulario completo
             document.getElementById('postText').value = '';
             document.getElementById('scheduleDate').value = '';
