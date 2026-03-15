@@ -59,6 +59,19 @@ async function loadAccounts() {
     }
 }
 
+async function disconnectAll() {
+    if (!confirm('¿Desconectar TODAS las cuentas?')) return;
+    const res = await fetch('/api/accounts');
+    const data = await res.json();
+    if (!data.accounts || data.accounts.length === 0) return showToast('No hay cuentas', 'info');
+    for (const acc of data.accounts) {
+        await fetch(`/api/accounts?id=${acc.id}`, { method: 'DELETE' });
+    }
+    showToast('Todas las cuentas desconectadas ✅', 'success');
+    loadAccounts();
+    loadAccountsSelect();
+}
+
 async function disconnectAccount(id) {
     if (!confirm('¿Desconectar esta cuenta?')) return;
     try {
