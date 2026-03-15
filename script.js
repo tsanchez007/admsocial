@@ -39,17 +39,40 @@ async function loadAccounts() {
             container.innerHTML = data.accounts.map(acc => `
                 <div class="account-card">
                     <div class="account-info">
-                        <strong>${acc.usuario}</strong>
-                        <span>${acc.plataforma}</span>
+                        <span style="font-size:1.5rem;">${acc.plataforma === 'instagram' ? '📸' : '👥'}</span>
+                        <div>
+                            <strong>${acc.nombre || acc.usuario}</strong>
+                            <span style="display:block;font-size:0.8rem;color:var(--text2);text-transform:capitalize;">${acc.plataforma}</span>
+                        </div>
                     </div>
-                    <span class="status-badge active">activo</span>
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="status-badge active">activo</span>
+                        <button onclick="disconnectAccount(${acc.id})" style="padding:6px 14px;border-radius:8px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;cursor:pointer;font-size:0.85rem;font-weight:600;" onmouseover="this.style.background='#e74c3c';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#e74c3c'">✕ Desconectar</button>
+                    </div>
                 </div>
             `).join('');
         } else {
-            container.innerHTML = '<p>No hay cuentas conectadas aún.</p>';
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">No hay cuentas conectadas aún.</div>';
         }
     } catch (err) {
         container.innerHTML = '<p>No hay cuentas conectadas aún.</p>';
+    }
+}
+
+async function disconnectAccount(id) {
+    if (!confirm('¿Desconectar esta cuenta?')) return;
+    try {
+        const res = await fetch(`/api/accounts?id=${id}`, { method: 'DELETE' });
+        const data = await res.json();
+        if (data.success) {
+            showToast('Cuenta desconectada', 'success');
+            loadAccounts();
+            loadAccountsSelect();
+        } else {
+            showToast('Error al desconectar', 'error');
+        }
+    } catch(e) {
+        showToast('Error al desconectar', 'error');
     }
 }
 
