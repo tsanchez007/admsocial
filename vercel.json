@@ -3,7 +3,7 @@
   "crons": [
     {
       "path": "/api/publish",
-      "schedule": "* * * * *"
+      "schedule": "0 * * * *"
     }
   ],
   "rewrites": [
