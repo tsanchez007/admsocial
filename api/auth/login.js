@@ -5,7 +5,9 @@ export default function handler(req, res) {
 
     const scope = [
         'public_profile',
-        'pages_show_list'
+        'pages_show_list',
+        'pages_read_engagement',
+        'pages_manage_posts'
     ].join(',');
 
     const redirectUri = encodeURIComponent(`${frontendUrl}/api/auth/callback`);
