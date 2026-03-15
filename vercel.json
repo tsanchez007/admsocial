@@ -13,6 +13,8 @@
     { "source": "/api/publish", "destination": "/api/publish" },
     { "source": "/api/posts/:id", "destination": "/api/posts/[id]" },
     { "source": "/api/posts", "destination": "/api/posts" },
+    { "source": "/script.js", "destination": "/script.js" },
+    { "source": "/style.css", "destination": "/style.css" },
     { "source": "/(.*)", "destination": "/index.html" }
   ]
 }
