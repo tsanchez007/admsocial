@@ -455,7 +455,7 @@ async function schedulePost(publishNow = false) {
         hasError = true;
     }
 
-    if (!dateVal) {
+    if (!publishNow && !dateVal) {
         markRed(document.getElementById('scheduleDate'));
         showToast('La fecha es requerida', 'error');
         hasError = true;
