@@ -513,14 +513,19 @@ async function schedulePost(publishNow = false) {
         const res = await fetch('/api/posts', { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(postData) });
         const data = await res.json();
         if (data.success) {
-            if (publishNow) {
-                showToast('🚀 Publicando...', 'success');
-                try {
-                    await fetch('/api/publish', {
-                        method: 'GET',
-                        headers: { 'Authorization': 'Bearer ' + (window._cronSecret || 'admsocial-cron-2025') }
-                    });
-                } catch(e) {}
+            if (publishNow && data.post?.id) {
+                showToast('🚀 Publicando...', 'info');
+                const pubRes = await fetch('/api/publish-now', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ post_id: data.post.id })
+                });
+                const pubData = await pubRes.json();
+                if (pubData.success) {
+                    showToast('✅ Publicado exitosamente', 'success');
+                } else {
+                    showToast('❌ Error al publicar: ' + (pubData.error || 'desconocido'), 'error');
+                }
             } else {
                 showToast('¡Publicación programada! 🎉', 'success');
             }

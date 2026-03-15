@@ -10,6 +10,7 @@
     { "source": "/api/auth/login", "destination": "/api/auth/login" },
     { "source": "/api/auth/callback", "destination": "/api/auth/callback" },
     { "source": "/api/accounts", "destination": "/api/accounts" },
+    { "source": "/api/publish-now", "destination": "/api/publish-now" },
     { "source": "/api/publish", "destination": "/api/publish" },
     { "source": "/api/posts/:id", "destination": "/api/posts/[id]" },
     { "source": "/api/posts", "destination": "/api/posts" },
