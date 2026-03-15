@@ -5,7 +5,10 @@ export default function handler(req, res) {
 
     const scope = [
         'public_profile',
-        'pages_show_list'
+        'pages_show_list',
+        'pages_read_engagement',
+        'instagram_basic',
+        'instagram_content_publish'
     ].join(',');
 
     const redirectUri = encodeURIComponent(`${frontendUrl}/api/auth/callback`);
