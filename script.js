@@ -458,6 +458,48 @@ async function loadAccountsSelect() {
 
 loadAccountsSelect();
 
+async function publishDirectly(post) {
+    const accRes = await fetch('/api/accounts');
+    const accData = await accRes.json();
+    const cuentas = accData.accounts || [];
+    const apiVersion = 'v18.0';
+    const plataformas = (post.plataformas || '').split(',').filter(Boolean);
+    for (const plat of plataformas) {
+        const cuenta = cuentas.find(a => a.plataforma === plat && post.cuenta_nombre && post.cuenta_nombre.includes(a.usuario));
+        if (!cuenta) continue;
+        const token = cuenta.token;
+        const pageId = cuenta.page_id || cuenta.usuario;
+        const media = post.imagen_url;
+        const isVideo = media && (media.includes('/video/') || /.(mp4|mov|webm)/i.test(media));
+        if (isVideo) {
+            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/videos', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({file_url: media, description: post.contenido || '', access_token: token})
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+        } else if (media) {
+            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/photos', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({url: media, message: post.contenido || '', access_token: token})
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+        } else {
+            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/feed', {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({message: post.contenido || '', access_token: token})
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+        }
+        await fetch('/api/posts/' + post.id, {method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({estado: 'publicado'})});
+    }
+}
+
 async function schedulePost(publishNow = false) {
     const text = document.getElementById('postText').value;
     const dateVal = document.getElementById("scheduleDate").value;
@@ -563,16 +605,13 @@ async function schedulePost(publishNow = false) {
         const data = await res.json();
         if (data.success) {
             if (publishNow && data.post?.id) {
-                showToast('🚀 Publicando...', 'info');
-                const pubRes = await fetch('/api/publish-now', {
-                    method: 'POST',
-                    headers: {'Content-Type': 'application/json'},
-                    body: JSON.stringify({ post_id: data.post.id })
-                });
-                const pubData = await pubRes.json();
-                if (pubData.success) {
-                    showToast('✅ Publicado exitosamente', 'success');
-                } else {
+                showToast("Publicando...", "info");
+                try {
+                    await publishDirectly(data.post);
+                    showToast("Publicado exitosamente", "success");
+                } catch(e) {
+                    showToast("Error al publicar: " + e.message, "error");
+                }
                     showToast('❌ Error al publicar: ' + (pubData.error || 'desconocido'), 'error');
                 }
             } else {
