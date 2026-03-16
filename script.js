@@ -381,9 +381,24 @@ function renderPosts(posts) {
         posts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card';
-            const imgEl = post.imagen_url
-                ? Object.assign(document.createElement('img'), {className:'post-img', src: post.imagen_url, alt:'imagen'})
-                : Object.assign(document.createElement('div'), {className:'post-img', innerHTML:'📄', style:'background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;'});
+            const isVideoUrl = post.imagen_url && (post.imagen_url.includes("/video/") || /.(mp4|mov|webm)/i.test(post.imagen_url));
+            let imgEl;
+            if (isVideoUrl) {
+                imgEl = document.createElement("video");
+                imgEl.className = "post-img";
+                imgEl.src = post.imagen_url;
+                imgEl.controls = true;
+                imgEl.style.objectFit = "cover";
+            } else if (post.imagen_url) {
+                imgEl = document.createElement("img");
+                imgEl.className = "post-img";
+                imgEl.src = post.imagen_url;
+                imgEl.alt = "imagen";
+            } else {
+                imgEl = document.createElement("div");
+                imgEl.className = "post-img";
+                imgEl.style = "background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;";
+            }
             const plats = (post.plataformas||'').split(',').filter(Boolean).map(p=>`<span class="plat-badge ${p==='instagram'?'plat-ig':'plat-fb'}">${p==='instagram'?'📸 Instagram':'👥 Facebook'}</span>`).join('');
             const estadoClass = post.estado === 'publicado' ? 'estado-ok' : post.estado === 'fallido' ? 'estado-err' : 'estado-pending';
             const cuentaNombre = post.cuenta_nombre ? `<span class="cuenta-badge">👤 ${post.cuenta_nombre}</span>` : '';
