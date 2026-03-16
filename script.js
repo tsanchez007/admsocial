@@ -476,6 +476,84 @@ async function loadAccountsSelect() {
 loadAccountsSelect();
 
 async function publishDirectly(post) {
+    const accRes = await fetch("/api/accounts");
+    const accData = await accRes.json();
+    const cuentas = accData.accounts || [];
+    const apiVersion = "v18.0";
+    const plataformas = (post.plataformas || "").split(",").filter(Boolean);
+    let mediaUrls = [];
+    try { mediaUrls = JSON.parse(post.imagen_url || "[]"); } catch(e) { if (post.imagen_url) mediaUrls = [post.imagen_url]; }
+    for (const plat of plataformas) {
+        const cuenta = cuentas.find(a => a.plataforma === plat && post.cuenta_nombre && post.cuenta_nombre.includes(a.usuario));
+        if (!cuenta) continue;
+        const token = cuenta.token;
+        const pageId = cuenta.page_id || cuenta.usuario;
+        if (mediaUrls.length > 1) {
+            // CARRUSEL
+            const attachments = [];
+            for (const url of mediaUrls) {
+                const isVid = url.includes("/video/") || /.(mp4|mov|webm)/i.test(url);
+                if (isVid) {
+                    const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/videos", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({file_url: url, published: false, access_token: token})
+                    });
+                    const d = await r.json();
+                    if (d.error) throw new Error(d.error.message);
+                    attachments.push({media_fbid: d.id});
+                } else {
+                    const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/photos", {
+                        method: "POST",
+                        headers: {"Content-Type": "application/json"},
+                        body: JSON.stringify({url: url, published: false, access_token: token})
+                    });
+                    const d = await r.json();
+                    if (d.error) throw new Error(d.error.message);
+                    attachments.push({media_fbid: d.id});
+                }
+            }
+            const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/feed", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: post.contenido || "", attached_media: attachments, access_token: token})
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+        } else if (mediaUrls.length === 1) {
+            const media = mediaUrls[0];
+            const isVideo = media.includes("/video/") || /.(mp4|mov|webm)/i.test(media);
+            if (isVideo) {
+                const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/videos", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({file_url: media, description: post.contenido || "", access_token: token})
+                });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error.message);
+            } else {
+                const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/photos", {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify({url: media, message: post.contenido || "", access_token: token})
+                });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error.message);
+            }
+        } else {
+            const r = await fetch("https://graph.facebook.com/" + apiVersion + "/" + pageId + "/feed", {
+                method: "POST",
+                headers: {"Content-Type": "application/json"},
+                body: JSON.stringify({message: post.contenido || "", access_token: token})
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+        }
+        await fetch("/api/posts/" + post.id, {method: "PATCH", headers: {"Content-Type": "application/json"}, body: JSON.stringify({estado: "publicado"})});
+    }
+}
+
+async function publishDirectly(post) {
     const accRes = await fetch('/api/accounts');
     const accData = await accRes.json();
     const cuentas = accData.accounts || [];
@@ -572,43 +650,41 @@ async function schedulePost(publishNow = false) {
     if (!publishNow && !scheduledAt) return showToast('La fecha es requerida', 'error');
     const cuenta_nombre = accountSelect?.options[accountSelect.selectedIndex]?.text || '';
 
-    let image_base64 = null;
-    if (fileInput && fileInput.files[0]) {
-        const file = fileInput.files[0];
-        if (file.type.startsWith('video/')) {
-            showToast('Subiendo video...', 'info');
-            const formData = new FormData();
-            formData.append('file', file);
-            formData.append('upload_preset', 'admsocial');
-            formData.append('folder', 'admsocial');
-            const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dglswxsel/video/upload', {
-                method: 'POST',
-                body: formData
-            });
-            const cloudData = await cloudRes.json();
-            if (!cloudData.secure_url) {
-                showToast('Error subiendo video', 'error');
-                return;
+    let mediaUrls = [];
+    if (fileInput && fileInput.files.length > 0) {
+        const files = Array.from(fileInput.files).slice(0, 10);
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            if (file.type.startsWith("video/")) {
+                showToast("Subiendo video " + (i+1) + " de " + files.length + "...", "info");
+                const formData = new FormData();
+                formData.append("file", file);
+                formData.append("upload_preset", "admsocial");
+                formData.append("folder", "admsocial");
+                const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dglswxsel/video/upload", { method: "POST", body: formData });
+                const cloudData = await cloudRes.json();
+                if (!cloudData.secure_url) { showToast("Error subiendo video " + (i+1), "error"); return; }
+                mediaUrls.push(cloudData.secure_url);
+            } else {
+                const url = await new Promise(resolve => {
+                    const canvas = document.createElement("canvas");
+                    const img = new Image();
+                    img.onload = () => {
+                        const MAX = 1080;
+                        let w = img.width, h = img.height;
+                        if (w > MAX) { h = h * MAX / w; w = MAX; }
+                        if (h > MAX) { w = w * MAX / h; h = MAX; }
+                        canvas.width = w; canvas.height = h;
+                        canvas.getContext("2d").drawImage(img, 0, 0, w, h);
+                        resolve(canvas.toDataURL("image/jpeg", 0.85));
+                    };
+                    img.src = URL.createObjectURL(file);
+                });
+                mediaUrls.push(url);
             }
-            image_base64 = cloudData.secure_url;
-            showToast('Video subido correctamente', 'success');
-        } else {
-            image_base64 = await new Promise(resolve => {
-                const canvas = document.createElement('canvas');
-                const img = new Image();
-                img.onload = () => {
-                    const MAX = 1080;
-                    let w = img.width, h = img.height;
-                    if (w > MAX) { h = h * MAX / w; w = MAX; }
-                    if (h > MAX) { w = w * MAX / h; h = MAX; }
-                    canvas.width = w; canvas.height = h;
-                    canvas.getContext('2d').drawImage(img, 0, 0, w, h);
-                    resolve(canvas.toDataURL('image/jpeg', 0.85));
-                };
-                img.src = URL.createObjectURL(file);
-            });
         }
     }
+    const image_base64 = mediaUrls.length > 0 ? JSON.stringify(mediaUrls) : null;
     const postData = { text, scheduled_at: scheduledAt, instagram, facebook, image_base64, cuenta_nombre };
     console.log('Enviando post:', { text, scheduled_at: scheduledAt, instagram, facebook, tieneMedia: !!image_base64, mediaSize: image_base64?.length, mediaType: fileInput.files[0]?.type });
     
@@ -753,6 +829,30 @@ function updateDimensionInfo() {
 document.getElementById('instagramCheck')?.addEventListener('change', () => { updateDimensionInfo(); renderTipos(); });
 document.getElementById('facebookCheck')?.addEventListener('change', () => { updateDimensionInfo(); renderTipos(); });
 
+document.getElementById('fileInput')?.addEventListener('change', function() {
+    const files = Array.from(this.files);
+    const grid = document.getElementById('mediaPreviewGrid');
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    grid.style.display = 'flex';
+    grid.innerHTML = '';
+    files.forEach(file => {
+        const url = URL.createObjectURL(file);
+        const wrapper = document.createElement('div');
+        wrapper.style.cssText = 'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid #ddd;';
+        if (file.type.startsWith('video/')) {
+            const v = document.createElement('video');
+            v.src = url; v.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            wrapper.appendChild(v);
+        } else {
+            const img = document.createElement('img');
+            img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            wrapper.appendChild(img);
+        }
+        grid.appendChild(wrapper);
+    });
+    document.getElementById('uploadHint').textContent = files.length + ' archivo(s) seleccionado(s)';
+    document.getElementById('uploadIcon').textContent = files.length > 1 ? '🗂' : (files[0].type.startsWith('video/') ? '🎬' : '🖼');
+});
 document.getElementById('fileInput')?.addEventListener('change', function() {
     const file = this.files[0];
     if (!file) return;
