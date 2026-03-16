@@ -516,12 +516,25 @@ async function schedulePost(publishNow = false) {
     let image_base64 = null;
     if (fileInput && fileInput.files[0]) {
         const file = fileInput.files[0];
-        image_base64 = await new Promise(resolve => {
-            if (file.type.startsWith('video/')) {
-                const reader = new FileReader();
-                reader.onload = e => resolve(e.target.result);
-                reader.readAsDataURL(file);
-            } else {
+        if (file.type.startsWith('video/')) {
+            showToast('Subiendo video...', 'info');
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('upload_preset', 'admsocial');
+            formData.append('folder', 'admsocial');
+            const cloudRes = await fetch('https://api.cloudinary.com/v1_1/dglswxsel/video/upload', {
+                method: 'POST',
+                body: formData
+            });
+            const cloudData = await cloudRes.json();
+            if (!cloudData.secure_url) {
+                showToast('Error subiendo video', 'error');
+                return;
+            }
+            image_base64 = cloudData.secure_url;
+            showToast('Video subido correctamente', 'success');
+        } else {
+            image_base64 = await new Promise(resolve => {
                 const canvas = document.createElement('canvas');
                 const img = new Image();
                 img.onload = () => {
@@ -534,8 +547,8 @@ async function schedulePost(publishNow = false) {
                     resolve(canvas.toDataURL('image/jpeg', 0.85));
                 };
                 img.src = URL.createObjectURL(file);
-            }
-        });
+            });
+        }
     }
     const postData = { text, scheduled_at: scheduledAt, instagram, facebook, image_base64, cuenta_nombre };
     console.log('Enviando post:', { text, scheduled_at: scheduledAt, instagram, facebook, tieneMedia: !!image_base64, mediaSize: image_base64?.length, mediaType: fileInput.files[0]?.type });
