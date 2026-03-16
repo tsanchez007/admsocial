@@ -13,23 +13,64 @@ async function uploadBase64ToImgbb(base64) {
     return json?.data?.url || null;
 }
 
+function isVideoUrl(url) {
+    if (!url) return false;
+    return url.includes('res.cloudinary.com') && (
+        url.includes('/video/') || url.match(/\.(mp4|mov|avi|webm)/i)
+    );
+}
+
+function isBase64Image(str) {
+    if (!str) return false;
+    return str.startsWith('data:image');
+}
+
 async function publishToFacebook(post, cuenta) {
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
     const token = cuenta.token;
     const pageId = cuenta.page_id || cuenta.usuario;
-    if (post.imagen_url) {
-        const imageUrl = await uploadBase64ToImgbb(post.imagen_url);
-        if (imageUrl) {
+    const media = post.imagen_url;
+
+    if (media) {
+        if (isVideoUrl(media)) {
+            // Es video de Cloudinary — publicar en /videos
+            const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/videos`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file_url: media, description: post.contenido || '', access_token: token })
+            });
+            const d = await r.json();
+            if (d.error) throw new Error(d.error.message);
+            return;
+        }
+        if (isBase64Image(media)) {
+            // Es imagen base64 — subir a imgbb primero
+            const imageUrl = await uploadBase64ToImgbb(media);
+            if (imageUrl) {
+                const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url: imageUrl, message: post.contenido || '', access_token: token })
+                });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error.message);
+                return;
+            }
+        }
+        if (media.startsWith('http')) {
+            // Es URL publica de imagen
             const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: imageUrl, message: post.contenido || '', access_token: token })
+                body: JSON.stringify({ url: media, message: post.contenido || '', access_token: token })
             });
             const d = await r.json();
             if (d.error) throw new Error(d.error.message);
             return;
         }
     }
+
+    // Solo texto
     const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/feed`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,15 +85,42 @@ async function publishToInstagram(post, cuenta) {
     const token = cuenta.token;
     const igId = cuenta.ig_account_id;
     if (!igId || !post.imagen_url) return;
-    const imageUrl = await uploadBase64ToImgbb(post.imagen_url);
-    if (!imageUrl) return;
+    const media = post.imagen_url;
+    let mediaUrl = null;
+
+    if (isVideoUrl(media)) {
+        mediaUrl = media;
+        const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ video_url: mediaUrl, media_type: 'REELS', caption: post.contenido || '', access_token: token })
+        });
+        const mediaData = await mediaRes.json();
+        if (!mediaData.id) throw new Error('No se pudo crear el contenedor de video en Instagram');
+        const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
+        });
+        const pubData = await pubRes.json();
+        if (pubData.error) throw new Error(pubData.error.message);
+        return;
+    }
+
+    if (isBase64Image(media)) {
+        mediaUrl = await uploadBase64ToImgbb(media);
+    } else if (media.startsWith('http')) {
+        mediaUrl = media;
+    }
+    if (!mediaUrl) return;
+
     const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl, caption: post.contenido || '', access_token: token })
+        body: JSON.stringify({ image_url: mediaUrl, caption: post.contenido || '', access_token: token })
     });
     const mediaData = await mediaRes.json();
-    if (!mediaData.id) throw new Error('No se pudo crear el contenedor de media');
+    if (!mediaData.id) throw new Error('No se pudo crear el contenedor de media en Instagram');
     const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
