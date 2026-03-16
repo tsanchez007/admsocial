@@ -388,6 +388,8 @@ function renderPosts(posts) {
                 imgEl.className = "post-img";
                 imgEl.src = post.imagen_url;
                 imgEl.controls = true;
+                imgEl.setAttribute("controls", "");
+                imgEl.setAttribute("playsinline", "");
                 imgEl.style.objectFit = "cover";
             } else if (post.imagen_url) {
                 imgEl = document.createElement("img");
