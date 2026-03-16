@@ -612,8 +612,6 @@ async function schedulePost(publishNow = false) {
                 } catch(e) {
                     showToast("Error al publicar: " + e.message, "error");
                 }
-                    showToast('❌ Error al publicar: ' + (pubData.error || 'desconocido'), 'error');
-                }
             } else {
                 showToast('¡Publicación programada! 🎉', 'success');
             }
