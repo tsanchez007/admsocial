@@ -29,51 +29,83 @@ async function publishToFacebook(post, cuenta) {
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
     const token = cuenta.token;
     const pageId = cuenta.page_id || cuenta.usuario;
-    const media = post.imagen_url;
 
-    if (media) {
+    // Parsear imagen_url — puede ser JSON array (carrusel) o URL/base64 única
+    let mediaUrls = [];
+    try {
+        const parsed = JSON.parse(post.imagen_url || '[]');
+        if (Array.isArray(parsed)) mediaUrls = parsed;
+        else if (post.imagen_url) mediaUrls = [post.imagen_url];
+    } catch(e) {
+        if (post.imagen_url) mediaUrls = [post.imagen_url];
+    }
+
+    // Resolver URLs públicas (subir base64 a imgbb si es necesario)
+    const publicUrls = [];
+    for (const m of mediaUrls) {
+        if (!m) continue;
+        if (isBase64Image(m)) {
+            const url = await uploadBase64ToImgbb(m);
+            if (url) publicUrls.push(url);
+        } else {
+            publicUrls.push(m);
+        }
+    }
+
+    if (publicUrls.length > 1) {
+        // CARRUSEL
+        const attachments = [];
+        for (const url of publicUrls) {
+            if (isVideoUrl(url)) {
+                const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/videos`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ file_url: url, published: false, access_token: token })
+                });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error.message);
+                attachments.push({ media_fbid: d.id });
+            } else {
+                const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
+                    method: 'POST', headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, published: false, access_token: token })
+                });
+                const d = await r.json();
+                if (d.error) throw new Error(d.error.message);
+                attachments.push({ media_fbid: d.id });
+            }
+        }
+        const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/feed`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: post.contenido || '', attached_media: attachments, access_token: token })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        return;
+    }
+
+    if (publicUrls.length === 1) {
+        const media = publicUrls[0];
         if (isVideoUrl(media)) {
-            // Es video de Cloudinary — publicar en /videos
             const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/videos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ file_url: media, description: post.contenido || '', access_token: token })
             });
             const d = await r.json();
             if (d.error) throw new Error(d.error.message);
             return;
         }
-        if (isBase64Image(media)) {
-            // Es imagen base64 — subir a imgbb primero
-            const imageUrl = await uploadBase64ToImgbb(media);
-            if (imageUrl) {
-                const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ url: imageUrl, message: post.contenido || '', access_token: token })
-                });
-                const d = await r.json();
-                if (d.error) throw new Error(d.error.message);
-                return;
-            }
-        }
-        if (media.startsWith('http')) {
-            // Es URL publica de imagen
-            const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ url: media, message: post.contenido || '', access_token: token })
-            });
-            const d = await r.json();
-            if (d.error) throw new Error(d.error.message);
-            return;
-        }
+        const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/photos`, {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ url: media, message: post.contenido || '', access_token: token })
+        });
+        const d = await r.json();
+        if (d.error) throw new Error(d.error.message);
+        return;
     }
 
     // Solo texto
     const r = await fetch(`https://graph.facebook.com/${apiVersion}/${pageId}/feed`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ message: post.contenido || '', access_token: token })
     });
     const d = await r.json();
@@ -147,7 +179,7 @@ export default async function handler(req, res) {
         const [cuentas] = await db.query('SELECT * FROM cuentas');
         const plataformas = (post.plataformas || '').split(',').filter(Boolean);
         for (const plat of plataformas) {
-            const cuenta = cuentas.find(c => c.plataforma === plat);
+            const cuenta = cuentas.find(c => c.plataforma === plat && (!post.cuenta_nombre || post.cuenta_nombre.includes(c.usuario) || post.cuenta_nombre.includes(c.nombre || '')));
             if (!cuenta) continue;
             if (plat === 'facebook') await publishToFacebook(post, cuenta);
             if (plat === 'instagram') await publishToInstagram(post, cuenta);

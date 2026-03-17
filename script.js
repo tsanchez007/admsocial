@@ -381,25 +381,48 @@ function renderPosts(posts) {
         posts.forEach(post => {
             const card = document.createElement('div');
             card.className = 'post-card';
-            const isVideoUrl = post.imagen_url && (post.imagen_url.includes("/video/") || /.(mp4|mov|webm)/i.test(post.imagen_url));
+            // Obtener la primera URL del carrusel o URL única
+            let firstMedia = post.imagen_url || '';
+            let isCarousel = false;
+            try {
+                const parsed = JSON.parse(firstMedia);
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                    isCarousel = parsed.length > 1;
+                    firstMedia = parsed[0];
+                }
+            } catch(e) {}
+            const isVideoUrl = firstMedia && (firstMedia.includes("/video/") || /\.(mp4|mov|webm)/i.test(firstMedia));
             let imgEl;
             if (isVideoUrl) {
+                // Video: mostrar miniatura sin controles
                 imgEl = document.createElement("video");
                 imgEl.className = "post-img";
-                imgEl.src = post.imagen_url;
-                imgEl.controls = true;
-                imgEl.setAttribute("controls", "");
-                imgEl.setAttribute("playsinline", "");
+                imgEl.src = firstMedia;
+                imgEl.muted = true;
                 imgEl.style.objectFit = "cover";
-            } else if (post.imagen_url) {
+                imgEl.style.pointerEvents = "none";
+            } else if (firstMedia) {
+                // Imagen o primera foto del carrusel
                 imgEl = document.createElement("img");
                 imgEl.className = "post-img";
-                imgEl.src = post.imagen_url;
+                imgEl.src = firstMedia;
                 imgEl.alt = "imagen";
+                // Badge de carrusel si hay múltiples fotos
+                if (isCarousel) {
+                    const wrapper = document.createElement("div");
+                    wrapper.style.cssText = "position:relative;";
+                    const badge = document.createElement("span");
+                    badge.textContent = "🗂 Carrusel";
+                    badge.style.cssText = "position:absolute;top:6px;left:6px;background:rgba(0,0,0,0.6);color:white;font-size:10px;padding:2px 6px;border-radius:4px;";
+                    wrapper.appendChild(imgEl);
+                    wrapper.appendChild(badge);
+                    imgEl = wrapper;
+                }
             } else {
                 imgEl = document.createElement("div");
                 imgEl.className = "post-img";
                 imgEl.style = "background:var(--border);display:flex;align-items:center;justify-content:center;font-size:2rem;";
+                imgEl.innerHTML = "📄";
             }
             const plats = (post.plataformas||'').split(',').filter(Boolean).map(p=>`<span class="plat-badge ${p==='instagram'?'plat-ig':'plat-fb'}">${p==='instagram'?'📸 Instagram':'👥 Facebook'}</span>`).join('');
             const estadoClass = post.estado === 'publicado' ? 'estado-ok' : post.estado === 'fallido' ? 'estado-err' : 'estado-pending';
@@ -483,6 +506,24 @@ async function publishDirectly(post) {
     const plataformas = (post.plataformas || "").split(",").filter(Boolean);
     let mediaUrls = [];
     try { mediaUrls = JSON.parse(post.imagen_url || "[]"); } catch(e) { if (post.imagen_url) mediaUrls = [post.imagen_url]; }
+    // Subir base64 a Cloudinary para obtener URLs públicas
+    const publicUrls = [];
+    for (const m of mediaUrls) {
+        if (m && m.startsWith('data:')) {
+            try {
+                const isVid = m.startsWith('data:video');
+                const formData = new FormData();
+                formData.append('file', m);
+                formData.append('upload_preset', 'admsocial');
+                const res = await fetch('https://api.cloudinary.com/v1_1/dglswxsel/' + (isVid ? 'video' : 'image') + '/upload', {method:'POST', body: formData});
+                const d = await res.json();
+                if (d.secure_url) publicUrls.push(d.secure_url);
+            } catch(e) { console.error('Error subiendo a Cloudinary:', e); }
+        } else if (m) {
+            publicUrls.push(m);
+        }
+    }
+    mediaUrls = publicUrls;
     for (const plat of plataformas) {
         const cuenta = cuentas.find(a => a.plataforma === plat && post.cuenta_nombre && post.cuenta_nombre.includes(a.usuario));
         if (!cuenta) continue;
@@ -550,48 +591,6 @@ async function publishDirectly(post) {
             if (d.error) throw new Error(d.error.message);
         }
         await fetch("/api/posts/" + post.id, {method: "PATCH", headers: {"Content-Type": "application/json"}, body: JSON.stringify({estado: "publicado"})});
-    }
-}
-
-async function publishDirectly(post) {
-    const accRes = await fetch('/api/accounts');
-    const accData = await accRes.json();
-    const cuentas = accData.accounts || [];
-    const apiVersion = 'v18.0';
-    const plataformas = (post.plataformas || '').split(',').filter(Boolean);
-    for (const plat of plataformas) {
-        const cuenta = cuentas.find(a => a.plataforma === plat && post.cuenta_nombre && post.cuenta_nombre.includes(a.usuario));
-        if (!cuenta) continue;
-        const token = cuenta.token;
-        const pageId = cuenta.page_id || cuenta.usuario;
-        const media = post.imagen_url;
-        const isVideo = media && (media.includes('/video/') || /.(mp4|mov|webm)/i.test(media));
-        if (isVideo) {
-            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/videos', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({file_url: media, description: post.contenido || '', access_token: token})
-            });
-            const d = await r.json();
-            if (d.error) throw new Error(d.error.message);
-        } else if (media) {
-            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/photos', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({url: media, message: post.contenido || '', access_token: token})
-            });
-            const d = await r.json();
-            if (d.error) throw new Error(d.error.message);
-        } else {
-            const r = await fetch('https://graph.facebook.com/' + apiVersion + '/' + pageId + '/feed', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({message: post.contenido || '', access_token: token})
-            });
-            const d = await r.json();
-            if (d.error) throw new Error(d.error.message);
-        }
-        await fetch('/api/posts/' + post.id, {method: 'PATCH', headers: {'Content-Type': 'application/json'}, body: JSON.stringify({estado: 'publicado'})});
     }
 }
 
@@ -666,7 +665,8 @@ async function schedulePost(publishNow = false) {
                 if (!cloudData.secure_url) { showToast("Error subiendo video " + (i+1), "error"); return; }
                 mediaUrls.push(cloudData.secure_url);
             } else {
-                const url = await new Promise(resolve => {
+                showToast("Subiendo imagen " + (i+1) + " de " + files.length + "...", "info");
+                const base64 = await new Promise(resolve => {
                     const canvas = document.createElement("canvas");
                     const img = new Image();
                     img.onload = () => {
@@ -676,11 +676,16 @@ async function schedulePost(publishNow = false) {
                         if (h > MAX) { w = w * MAX / h; h = MAX; }
                         canvas.width = w; canvas.height = h;
                         canvas.getContext("2d").drawImage(img, 0, 0, w, h);
-                        resolve(canvas.toDataURL("image/jpeg", 0.85));
+                        resolve(canvas.toDataURL("image/jpeg", 0.85).split(",")[1]);
                     };
                     img.src = URL.createObjectURL(file);
                 });
-                mediaUrls.push(url);
+                const formData = new FormData();
+                formData.append("image", base64);
+                const imgRes = await fetch("https://api.imgbb.com/1/upload?key=2cdf4e5bb73df18e731e868e08a135ef", { method: "POST", body: formData });
+                const imgData = await imgRes.json();
+                if (!imgData.data?.url) { showToast("Error subiendo imagen " + (i+1), "error"); return; }
+                mediaUrls.push(imgData.data.url);
             }
         }
     }
@@ -701,12 +706,13 @@ async function schedulePost(publishNow = false) {
                 showToast("Publicando...", "info");
                 try {
                     await publishDirectly(data.post);
-                    showToast("Publicado exitosamente", "success");
+                    showToast("✅ PUBLICADO", "success"); setTimeout(() => location.reload(), 2500);
                 } catch(e) {
                     showToast("Error al publicar: " + e.message, "error");
                 }
             } else {
-                showToast('¡Publicación programada! 🎉', 'success');
+                showToast('✅ PROGRAMADO', 'success'); setTimeout(() => location.reload(), 2500);
+                setTimeout(() => location.reload(), 2000);
             }
             // Reset formulario completo
             document.getElementById('postText').value = '';
@@ -724,6 +730,9 @@ async function schedulePost(publishNow = false) {
             document.getElementById('uploadHint').textContent = 'Arrastra una imagen o video y haz clic';
             document.getElementById('dimensionInfo').textContent = '';
             document.getElementById('tipoPublicacionRow').style.display = 'none';
+            const grid = document.getElementById('mediaPreviewGrid');
+            if (grid) { grid.innerHTML = ''; grid.style.display = 'none'; }
+            document.getElementById('uploadPlaceholder').style.display = 'flex';
             document.getElementById('tipoOpciones').innerHTML = '';
             document.getElementById('dimensionLabel').textContent = '';
         } else {
