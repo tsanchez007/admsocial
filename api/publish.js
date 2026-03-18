@@ -109,20 +109,61 @@ async function publishToInstagram(post, cuenta) {
     const token = cuenta.token;
     const igId = cuenta.ig_account_id;
     if (!igId || !post.imagen_url) return;
-    const imageUrl = await uploadBase64ToImgbb(post.imagen_url);
-    if (!imageUrl) return;
+
+    // Fix: imagen_url puede ser un array JSON string
+    let media = post.imagen_url;
+    if (media && media.startsWith('[')) {
+        try { media = JSON.parse(media)[0]; } catch(e) {}
+    }
+
+    if (isVideoUrl(media)) {
+        const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ video_url: media, media_type: 'REELS', caption: post.contenido || '', access_token: token })
+        });
+        const mediaData = await mediaRes.json();
+        if (!mediaData.id) throw new Error('No se pudo crear contenedor de video en Instagram');
+        let status = 'IN_PROGRESS';
+        for (let i = 0; i < 12; i++) {
+            await new Promise(r => setTimeout(r, 5000));
+            const statusRes = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
+            const statusData = await statusRes.json();
+            status = statusData.status_code;
+            if (status === 'FINISHED') break;
+            if (status === 'ERROR') throw new Error('Error procesando video en Instagram');
+        }
+        const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
+        });
+        const pubData = await pubRes.json();
+        if (pubData.error) throw new Error(pubData.error.message);
+        return;
+    }
+
+    let mediaUrl = media;
+    if (isBase64Image(media)) {
+        mediaUrl = await uploadBase64ToImgbb(media);
+    }
+    if (!mediaUrl) return;
+
     const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ image_url: imageUrl, caption: post.contenido || '', access_token: token })
+        body: JSON.stringify({ image_url: mediaUrl, caption: post.contenido || '', access_token: token })
     });
     const mediaData = await mediaRes.json();
-    if (!mediaData.id) return;
-    await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
+    if (!mediaData.id) throw new Error('No se pudo crear contenedor de imagen en Instagram');
+    await new Promise(r => setTimeout(r, 5000));
+    const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
     });
+    const pubData = await pubRes.json();
+    if (pubData.error) throw new Error(pubData.error.message);
 }
 
 export default async function handler(req, res) {

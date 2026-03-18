@@ -1,3 +1,5 @@
+let carouselFiles = [];
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Script cargado y listo ✅");
 
@@ -36,28 +38,51 @@ async function loadAccounts() {
         if (!container) return;
 
         if (data.accounts && data.accounts.length > 0) {
-            container.innerHTML = data.accounts.map(acc => `
-                <div class="account-card">
-                    <div class="account-info">
-                        <span style="font-size:1.5rem;">${acc.plataforma === 'instagram' ? '📸' : '👥'}</span>
-                        <div>
-                            <strong>${acc.nombre || acc.usuario}</strong>
-                            <span style="display:block;font-size:0.8rem;color:var(--text2);text-transform:capitalize;">${acc.plataforma}</span>
+            // Agrupar por page_id
+            const grouped = {};
+            data.accounts.forEach(acc => {
+                const key = acc.page_id;
+                if (!grouped[key]) grouped[key] = { nombre: null, redes: [] };
+                if (acc.plataforma === 'facebook') grouped[key].nombre = acc.nombre;
+                grouped[key].redes.push(acc);
+            });
+
+            container.innerHTML = Object.values(grouped).map(grupo => {
+                const nombre = grupo.nombre || grupo.redes[0].nombre || grupo.redes[0].usuario;
+                const hasIG = grupo.redes.some(r => r.plataforma === 'instagram');
+                const hasFB = grupo.redes.some(r => r.plataforma === 'facebook');
+                const ids = grupo.redes.map(r => r.id).join(',');
+                const fbIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 50 50"><rect width="50" height="50" rx="8" fill="#1877F2"/><path d="M31 17h-3.5c-1.9 0-2.5 1-2.5 2.5V23h6l-1 6h-5v14h-6V29h-4v-6h4v-4.5c0-4 2.5-6.5 6.5-6.5h5v6z" fill="white"/></svg>`;
+                const igIcon = `<svg xmlns="http://www.w3.org/2000/svg" width="26" height="26" viewBox="0 0 50 50"><defs><linearGradient id="ig" x1="0%" y1="100%" x2="100%" y2="0%"><stop offset="0%" style="stop-color:#f09433"/><stop offset="50%" style="stop-color:#dc2743"/><stop offset="100%" style="stop-color:#bc1888"/></linearGradient></defs><rect width="50" height="50" rx="12" fill="url(#ig)"/><g fill="white"><path d="M25 14.2c3.5 0 3.9 0 5.3.1 1.3.1 2 .3 2.5.5.6.2 1 .5 1.5 1s.8.9 1 1.5c.2.5.4 1.2.5 2.5.1 1.4.1 1.8.1 5.3s0 3.9-.1 5.3c-.1 1.3-.3 2-.5 2.5-.2.6-.5 1-1 1.5s-.9.8-1.5 1c-.5.2-1.2.4-2.5.5-1.4.1-1.8.1-5.3.1s-3.9 0-5.3-.1c-1.3-.1-2-.3-2.5-.5-.6-.2-1-.5-1.5-1s-.8-.9-1-1.5c-.2-.5-.4-1.2-.5-2.5-.1-1.4-.1-1.8-.1-5.3s0-3.9.1-5.3c.1-1.3.3-2 .5-2.5.2-.6.5-1 1-1.5s.9-.8 1.5-1c.5-.2 1.2-.4 2.5-.5 1.4-.1 1.8-.1 5.3-.1m0-2.3c-3.6 0-4 0-5.4.1-1.4.1-2.3.3-3.2.6-.9.3-1.6.8-2.4 1.6-.8.8-1.3 1.5-1.6 2.4-.3.9-.5 1.8-.6 3.2-.1 1.4-.1 1.8-.1 5.4s0 4 .1 5.4c.1 1.4.3 2.3.6 3.2.3.9.8 1.6 1.6 2.4.8.8 1.5 1.3 2.4 1.6.9.3 1.8.5 3.2.6 1.4.1 1.8.1 5.4.1s4 0 5.4-.1c1.4-.1 2.3-.3 3.2-.6.9-.3 1.6-.8 2.4-1.6.8-.8 1.3-1.5 1.6-2.4.3-.9.5-1.8.6-3.2.1-1.4.1-1.8.1-5.4s0-4-.1-5.4c-.1-1.4-.3-2.3-.6-3.2-.3-.9-.8-1.6-1.6-2.4-.8-.8-1.5-1.3-2.4-1.6-.9-.3-1.8-.5-3.2-.6-1.4-.1-1.8-.1-5.4-.1z"/><path d="M25 18.2c-3.8 0-6.8 3-6.8 6.8s3 6.8 6.8 6.8 6.8-3 6.8-6.8-3-6.8-6.8-6.8zm0 11.4c-2.5 0-4.5-2-4.5-4.5s2-4.5 4.5-4.5 4.5 2 4.5 4.5-2 4.5-4.5 4.5z"/><circle cx="34.1" cy="15.9" r="1.6"/></g></svg>`;
+                return `<div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-radius:12px;border:1px solid #eee;margin-bottom:10px;background:#fff;">
+                    <div style="display:flex;align-items:center;gap:14px;">
+                        <strong style="font-size:1rem;">${nombre}</strong>
+                        <div style="display:flex;align-items:center;gap:6px;">
+                            ${hasFB ? fbIcon : ''}
+                            ${hasIG ? igIcon : ''}
                         </div>
                     </div>
-                    <div style="display:flex;align-items:center;gap:10px;">
-                        <span class="status-badge active">activo</span>
-                        <button onclick="disconnectAccount(${acc.id})" style="padding:6px 14px;border-radius:8px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;cursor:pointer;font-size:0.85rem;font-weight:600;" onmouseover="this.style.background='#e74c3c';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#e74c3c'">✕ Desconectar</button>
-                    </div>
-                </div>
-            `).join('');
+                    <button onclick="disconnectGroup('${ids}')" style="padding:6px 14px;border-radius:8px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;cursor:pointer;font-size:0.85rem;font-weight:600;" onmouseover="this.style.background='#e74c3c';this.style.color='white'" onmouseout="this.style.background='transparent';this.style.color='#e74c3c'">x Desconectar</button>
+                </div>`;
+            }).join('');
         } else {
-            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">No hay cuentas conectadas aún.</div>';
+            container.innerHTML = '<div style="text-align:center;padding:40px;color:var(--text2);">No hay cuentas conectadas.</div>';
         }
     } catch (err) {
-        container.innerHTML = '<p>No hay cuentas conectadas aún.</p>';
+        console.error(err);
     }
 }
+
+async function disconnectGroup(idsStr) {
+    if (!confirm('¿Desconectar esta cuenta?')) return;
+    const ids = idsStr.split(',');
+    for (const id of ids) {
+        await fetch('/api/accounts?id=' + id, { method: 'DELETE' });
+    }
+    loadAccounts();
+    loadAccountsSelect();
+}
+
 
 async function disconnectAll() {
     if (!confirm('¿Desconectar TODAS las cuentas?')) return;
@@ -672,8 +697,9 @@ async function schedulePost(publishNow = false) {
     const cuenta_nombre = accountSelect?.options[accountSelect.selectedIndex]?.text || '';
 
     let mediaUrls = [];
-    if (fileInput && fileInput.files.length > 0) {
-        const files = Array.from(fileInput.files).slice(0, 10);
+    const filesToUpload = (typeof carouselFiles !== 'undefined' && carouselFiles.length > 0) ? carouselFiles : (fileInput && fileInput.files.length > 0 ? Array.from(fileInput.files).slice(0, 10) : []);
+    if (filesToUpload.length > 0) {
+        const files = filesToUpload;
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             if (file.type.startsWith("video/")) {
@@ -866,29 +892,151 @@ function updateDimensionInfo() {
 document.getElementById('instagramCheck')?.addEventListener('change', () => { updateDimensionInfo(); renderTipos(); });
 document.getElementById('facebookCheck')?.addEventListener('change', () => { updateDimensionInfo(); renderTipos(); });
 
-document.getElementById('fileInput')?.addEventListener('change', function() {
-    const files = Array.from(this.files);
+function renderCarouselGrid() {
     const grid = document.getElementById('mediaPreviewGrid');
-    document.getElementById('uploadPlaceholder').style.display = 'none';
-    grid.style.display = 'flex';
+    const cnt = carouselFiles.length;
+    grid.style.display = cnt > 0 ? 'flex' : 'none';
+    grid.style.flexWrap = 'nowrap';
+    grid.style.overflowX = cnt > 3 ? 'scroll' : 'hidden';
+    grid.style.overflowY = 'hidden';
+    grid.style.flexDirection = 'row';
+    grid.style.alignItems = 'stretch';
+    grid.style.gap = '8px';
+    grid.style.scrollSnapType = 'x mandatory';
+    grid.style.scrollBehavior = 'smooth';
+    grid.style.scrollbarWidth = 'none';
+    // Limitar ancho para mostrar exactamente 3
+    const uploadArea = document.getElementById('uploadArea');
+    const maxW = uploadArea ? uploadArea.offsetWidth - 16 : 400;
+    grid.style.width = maxW + 'px';
+    grid.style.maxWidth = maxW + 'px';
     grid.innerHTML = '';
-    files.forEach(file => {
+
+    // Flechas solo si hay mas de 3
+    const existingArrows = document.querySelectorAll('.carousel-arrow');
+    existingArrows.forEach(a => a.remove());
+    if (cnt > 3) {
+        const uploadArea = document.getElementById('uploadArea');
+        const arrowStyle = 'position:absolute;top:50%;transform:translateY(-50%);background:rgba(108,99,255,0.6);color:#fff;border:none;border-radius:50%;width:36px;height:36px;font-size:18px;cursor:pointer;z-index:10;display:flex;align-items:center;justify-content:center;';
+        const leftBtn = document.createElement('button');
+        leftBtn.className = 'carousel-arrow';
+        leftBtn.innerHTML = '&#8249;';
+        leftBtn.style.cssText = arrowStyle + 'left:6px;';
+        leftBtn.onclick = (e) => { e.stopPropagation(); e.preventDefault(); grid.scrollBy({ left: -grid.offsetWidth/3, behavior: 'smooth' }); };
+        const rightBtn = document.createElement('button');
+        rightBtn.className = 'carousel-arrow';
+        rightBtn.innerHTML = '&#8250;';
+        rightBtn.style.cssText = arrowStyle + 'right:6px;';
+        rightBtn.onclick = (e) => { e.stopPropagation(); e.preventDefault(); grid.scrollBy({ left: grid.offsetWidth/3, behavior: 'smooth' }); };
+        if (uploadArea) {
+            uploadArea.style.position = 'relative';
+            uploadArea.style.overflow = 'hidden';
+            uploadArea.appendChild(leftBtn);
+            uploadArea.appendChild(rightBtn);
+        }
+    }
+    carouselFiles.forEach((file, idx) => {
         const url = URL.createObjectURL(file);
         const wrapper = document.createElement('div');
-        wrapper.style.cssText = 'position:relative;width:80px;height:80px;border-radius:8px;overflow:hidden;border:1px solid #ddd;';
+        wrapper.draggable = true;
+        wrapper.dataset.idx = idx;
+        const uploadArea = document.getElementById('uploadArea');
+        const areaWidth = (uploadArea?.offsetWidth || 400) - 16;
+        const areaHeight = (uploadArea?.offsetHeight || 400) - 16;
+        const count = carouselFiles.length;
+        let itemW;
+        if (count === 1) itemW = areaWidth;
+        else if (count === 2) itemW = Math.floor((areaWidth - 8) / 2);
+        else itemW = Math.floor((areaWidth - 16) / 3);
+        wrapper.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;border:2px solid #6c63ff;cursor:grab;flex-shrink:0;width:' + itemW + 'px;height:' + areaHeight + 'px;scroll-snap-align:start;object-fit:cover;';
+        // Detectar orientacion de imagen para ajustar object-fit
+        if (!file.type.startsWith('video/')) {
+            const tempImg = new Image();
+            tempImg.onload = () => {
+                const isLandscape = tempImg.width > tempImg.height;
+                const mediaEl = wrapper.querySelector('img');
+                if (mediaEl) mediaEl.style.objectFit = isLandscape ? 'contain' : 'cover';
+            };
+            tempImg.src = URL.createObjectURL(file);
+        }
         if (file.type.startsWith('video/')) {
             const v = document.createElement('video');
-            v.src = url; v.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            v.src = url; v.style.cssText = 'max-width:100%;max-height:400px;display:block;background:#000;border-radius:6px;';
+            v.onloadedmetadata = function() {
+                if (v.videoWidth > v.videoHeight) {
+                    wrapper.style.width = '100%';
+                    wrapper.style.height = 'auto';
+                } else {
+                    wrapper.style.width = 'auto';
+                    wrapper.style.height = '400px';
+                }
+            };
+            const playBtn = document.createElement('div');
+            playBtn.innerHTML = '▶';
+            playBtn.style.cssText = 'position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:50px;height:50px;display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer;z-index:3;transition:opacity 0.2s;';
+            playBtn.onclick = (e) => {
+                e.stopPropagation();
+                if (v.paused) { v.play(); playBtn.style.opacity='0'; }
+                else { v.pause(); playBtn.style.opacity='1'; }
+            };
+            v.onclick = () => { if (v.paused) { v.play(); playBtn.style.opacity='0'; } else { v.pause(); playBtn.style.opacity='1'; } };
+            v.onended = () => { playBtn.style.opacity='1'; playBtn.innerHTML='▶'; };
+            wrapper.appendChild(playBtn);
             wrapper.appendChild(v);
         } else {
             const img = document.createElement('img');
             img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
             wrapper.appendChild(img);
         }
+        const badge = document.createElement('div');
+        badge.textContent = idx + 1;
+        badge.style.cssText = 'position:absolute;top:3px;left:3px;background:#6c63ff;color:#fff;border-radius:50%;width:20px;height:20px;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:bold;z-index:2;';
+        wrapper.appendChild(badge);
+        const del = document.createElement('div');
+        del.textContent = 'x';
+        del.style.cssText = 'position:absolute;top:3px;right:3px;background:rgba(0,0,0,0.6);color:#fff;border-radius:50%;width:18px;height:18px;display:flex;align-items:center;justify-content:center;font-size:10px;cursor:pointer;z-index:2;';
+        del.onclick = (e) => { e.stopPropagation(); carouselFiles.splice(idx, 1); renderCarouselGrid(); updateCarouselHint(); };
+        wrapper.appendChild(del);
+        wrapper.addEventListener('dragstart', (e) => { e.dataTransfer.setData('text/plain', idx); wrapper.style.opacity = '0.5'; });
+        wrapper.addEventListener('dragend', () => { wrapper.style.opacity = '1'; });
+        wrapper.addEventListener('dragover', (e) => { e.preventDefault(); wrapper.style.border = '2px solid #ff6b6b'; });
+        wrapper.addEventListener('dragleave', () => { wrapper.style.border = '2px solid #6c63ff'; });
+        wrapper.addEventListener('drop', (e) => {
+            e.preventDefault();
+            wrapper.style.border = '2px solid #6c63ff';
+            const from = parseInt(e.dataTransfer.getData('text/plain'));
+            const to = idx;
+            if (from !== to) {
+                const moved = carouselFiles.splice(from, 1)[0];
+                carouselFiles.splice(to, 0, moved);
+                renderCarouselGrid();
+            }
+        });
         grid.appendChild(wrapper);
     });
-    document.getElementById('uploadHint').textContent = files.length + ' archivo(s) seleccionado(s)';
-    document.getElementById('uploadIcon').textContent = files.length > 1 ? '🗂' : (files[0].type.startsWith('video/') ? '🎬' : '🖼');
+}
+
+function updateCarouselHint() {
+    const hint = document.getElementById('uploadHint');
+    const icon = document.getElementById('uploadIcon');
+    if (carouselFiles.length === 0) {
+        document.getElementById('uploadPlaceholder').style.display = 'flex';
+        document.getElementById('mediaPreviewGrid').style.display = 'none';
+        if (hint) hint.textContent = 'Clic para subir foto o video';
+        if (icon) icon.textContent = '📎';
+    } else {
+        if (hint) hint.textContent = carouselFiles.length + ' archivo(s) - Arrastra para reordenar';
+        if (icon) icon.textContent = carouselFiles.length > 1 ? '🗂' : (carouselFiles[0].type.startsWith('video/') ? '🎬' : '🖼');
+    }
+}
+
+document.getElementById('fileInput')?.addEventListener('change', function() {
+    const newFiles = Array.from(this.files);
+    carouselFiles = [...carouselFiles, ...newFiles].slice(0, 10);
+    document.getElementById('uploadPlaceholder').style.display = 'none';
+    renderCarouselGrid();
+    updateCarouselHint();
+    this.value = '';
 });
 document.getElementById('fileInput')?.addEventListener('change', function() {
     const file = this.files[0];
