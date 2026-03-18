@@ -69,7 +69,12 @@ export default async function handler(req, res) {
         }
 
         await db.end();
-        res.redirect(`${frontendUrl}/dashboard?user=${encodeURIComponent(userData.name)}`);
+        const state = req.query.state || '';
+        if (state === 'conectar') {
+            res.redirect('https://admsocial.vercel.app/conectado.html');
+        } else {
+            res.redirect(`${frontendUrl}/dashboard?user=${encodeURIComponent(userData.name)}`);
+        }
 
     } catch (err) {
         console.error('Callback error:', err);

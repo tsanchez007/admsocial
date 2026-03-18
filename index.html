@@ -37,12 +37,17 @@
     </button>
     <button class="nav-item" data-section="exportSettings">
       <span class="nav-icon">⚙️</span>
-      <span>Ajustes PDF</span>
+      <span>Ajustes</span>
+    </button>
+    <button class="nav-item" onclick="shareConnectLink()" style="margin-top:8px;">
+      <span class="nav-icon">🔑</span>
+      <span>Conectar</span>
     </button>
   </nav>
 
   <div class="sidebar-bottom">
     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙</button>
+    <button onclick="logout()" style="width:100%;padding:8px;margin-top:8px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;">🚪 Cerrar Sesión</button>
   </div>
 </aside>
 
@@ -247,9 +252,14 @@
   <!-- ─── AJUSTES PDF ─── -->
   <section class="section" id="exportSettings">
     <div class="section-header">
-      <h1>Ajustes de Exportación PDF</h1>
-      <p>Personaliza cómo se verá tu reporte impreso</p>
+      <h1>Ajustes</h1>
+      <p>Configuración del sistema</p>
     </div>
+    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:2px solid #eee;padding-bottom:0;">
+      <button onclick="showTab('tabPDF')" id="btnTabPDF" style="padding:10px 20px;border:none;background:none;border-bottom:3px solid #6c63ff;color:#6c63ff;font-weight:600;cursor:pointer;font-size:0.95rem;">📄 Ajustes PDF</button>
+      <button onclick="showTab('tabAdmin')" id="btnTabAdmin" style="padding:10px 20px;border:none;background:none;border-bottom:3px solid transparent;color:#999;font-weight:600;cursor:pointer;font-size:0.95rem;">⚙️ Ajustes Administrativos</button>
+    </div>
+    <div id="tabPDF">
 
     <div class="settings-card">
       <h2 class="settings-title">🖼 Portada</h2>
@@ -285,6 +295,117 @@
     </div>
 
     <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;">💾 Guardar ajustes</button>
+    </div>
+
+    <div id="tabAdmin" style="display:none;">
+      <div class="settings-card">
+        <h2 class="settings-title">🖼 Logos</h2>
+        <p class="settings-desc">Configura los logos de la plataforma</p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Logo del Login</label>
+            <div id="logoLoginPreview" onclick="document.getElementById('logoLoginInput').click()" style="width:100%;height:60px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9;overflow:hidden;">
+              <span style="color:#999;font-size:0.85rem;">Click para subir</span>
+            </div>
+            <input type="file" id="logoLoginInput" accept="image/*" style="display:none;" onchange="previewLogo('logoLoginInput','logoLoginPreview','logoLogin')">
+          </div>
+          <div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Logo del Menú</label>
+            <div id="logoMenuPreview" onclick="document.getElementById('logoMenuInput').click()" style="width:100%;height:60px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9;overflow:hidden;">
+              <span style="color:#999;font-size:0.85rem;">Click para subir</span>
+            </div>
+            <input type="file" id="logoMenuInput" accept="image/*" style="display:none;" onchange="previewLogo('logoMenuInput','logoMenuPreview','logoMenu')">
+          </div>
+        </div>
+        <button onclick="saveLogos()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Guardar Logos</button>
+      </div>
+
+      <div class="settings-card">
+        <h2 class="settings-title">🏢 Información de la Empresa</h2>
+        <p class="settings-desc">Configura el nombre que aparece en el login</p>
+        <div style="margin-bottom:16px;">
+          <label style="font-weight:600;display:block;margin-bottom:6px;">Nombre de la empresa</label>
+          <input type="text" id="adminNombre" placeholder="Social ADM Group" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;">
+        </div>
+        <button onclick="saveAdminSettings()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Guardar</button>
+      </div>
+      <div class="settings-card">
+        <h2 class="settings-title">👥 Gestión de Usuarios</h2>
+        <p class="settings-desc">Crea y administra usuarios asistentes</p>
+        <button onclick="toggleUserForm()" id="btnNuevoUsuario" style="padding:10px 20px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-bottom:16px;">+ Nuevo Usuario</button>
+
+        <div id="userForm" style="display:none;background:#f9f9ff;border:1px solid #e0deff;border-radius:12px;padding:24px;margin-bottom:20px;">
+          <h3 style="margin-bottom:16px;color:#6c63ff;">Nuevo Usuario</h3>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+            <div>
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Nombre completo</label>
+              <input type="text" id="newNombre" placeholder="Ej: María González" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Usuario</label>
+              <input type="text" id="newUsername" placeholder="Ej: mgonzalez" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Correo (recuperación)</label>
+              <input type="email" id="newEmail" placeholder="correo@ejemplo.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+            </div>
+            <div>
+              <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Contraseña</label>
+              <input type="password" id="newPassword" placeholder="Contraseña segura" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Tipo de usuario</label>
+            <select id="newRol" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
+              <option value="asistente">Asistente</option>
+              <option value="admin">Administrador</option>
+            </select>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">📝 Publicaciones</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="crear_publicacion" checked> Crear publicaciones</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="publicar_ahora" checked> Publicar ahora</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="programar" checked> Programar posts</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_programados" checked> Ver programados</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="eliminar_publicacion"> Eliminar publicaciones</label>
+            </div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">📊 Visualización</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_dashboard" checked> Ver dashboard</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_estadisticas"> Ver estadísticas</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="exportar_pdf"> Exportar PDF</label>
+            </div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">👤 Cuentas</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_cuentas"> Ver cuentas</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="conectar_cuentas"> Conectar/desconectar cuentas</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="enviar_link"> Enviar link de conexión</label>
+            </div>
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">⚙️ Sistema</label>
+            <div style="display:flex;flex-wrap:wrap;gap:8px;">
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ajustes_pdf"> Ajustes PDF</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ajustes_admin"> Ajustes administrativos</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="gestionar_usuarios"> Gestión de usuarios</label>
+              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="cambiar_logo"> Cambiar logo y nombre</label>
+            </div>
+          </div>
+          <div style="margin-bottom:16px;">
+            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Cuentas asignadas</label>
+            <div id="cuentasCheckList" style="display:flex;flex-wrap:wrap;gap:8px;">
+              <p style="color:#999;font-size:0.85rem;">Cargando cuentas...</p>
+            </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;">
+            <button onclick="createUser()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Crear Usuario</button>
+            <button onclick="toggleUserForm()" style="padding:10px 24px;background:transparent;color:#999;border:1px solid #ddd;border-radius:8px;cursor:pointer;">Cancelar</button>
+          </div>
+        </div>
+
+        <div id="usersList"></div>
+      </div>
+    </div>
   </section>
 
 </main>

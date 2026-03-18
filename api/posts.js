@@ -20,12 +20,12 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'POST') {
-            const { text, scheduled_at, instagram, facebook, image_base64, cuenta_nombre } = req.body;
+            const { text, scheduled_at, instagram, facebook, image_base64, cuenta_nombre, tipo_publicacion } = req.body;
             if (!scheduled_at) return res.status(400).json({ success: false, error: 'La fecha es requerida' });
             const plataformas = [instagram ? 'instagram' : '', facebook ? 'facebook' : ''].filter(Boolean).join(',');
             const [result] = await db.query(
-                'INSERT INTO publicaciones (titulo, contenido, imagen_url, plataformas, fecha_programada, estado, cuenta_nombre) VALUES (?, ?, ?, ?, ?, ?, ?)',
-                ['', text || '', image_base64 || null, plataformas, scheduled_at, 'pendiente', cuenta_nombre || '']
+                'INSERT INTO publicaciones (titulo, contenido, imagen_url, plataformas, fecha_programada, estado, cuenta_nombre, tipo_publicacion) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+                ['', text || '', image_base64 || null, plataformas, scheduled_at, 'pendiente', cuenta_nombre || '', tipo_publicacion || null]
             );
             const [rows] = await db.query('SELECT * FROM publicaciones WHERE id = ?', [result.insertId]);
             return res.json({ success: true, post: rows[0] });

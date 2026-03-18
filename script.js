@@ -1,6 +1,9 @@
 let carouselFiles = [];
 
 document.addEventListener('DOMContentLoaded', () => {
+    const user = sessionStorage.getItem('user');
+    if (!user) { window.location.href = '/login'; return; }
+
     console.log("Script cargado y listo ✅");
 
     // --- NAVEGACIÓN ENTRE SECCIONES ---
@@ -743,7 +746,7 @@ async function schedulePost(publishNow = false) {
         }
     }
     const image_base64 = mediaUrls.length > 0 ? JSON.stringify(mediaUrls) : null;
-    const postData = { text, scheduled_at: scheduledAt, instagram, facebook, image_base64, cuenta_nombre };
+    const postData = { text, scheduled_at: scheduledAt, instagram, facebook, image_base64, cuenta_nombre, tipo_publicacion: tipoSeleccionado?.id || null };
     console.log('Enviando post:', { text, scheduled_at: scheduledAt, instagram, facebook, tieneMedia: !!image_base64, mediaSize: image_base64?.length, mediaType: fileInput.files[0]?.type });
     
     
@@ -1194,4 +1197,230 @@ async function editPost(id) {
         modal.remove();
         loadPosts();
     };
+}
+
+function shareConnectLink() {
+    const url = 'https://admsocial.vercel.app/conectar';
+    if (navigator.share) {
+        navigator.share({ title: 'Conectar cuenta', url });
+    } else {
+        navigator.clipboard.writeText(url);
+        showToast('Link copiado al portapapeles', 'success');
+    }
+}
+
+function logout() {
+    sessionStorage.removeItem('user');
+    window.location.href = '/login';
+}
+
+function showTab(tab) {
+    document.getElementById('tabPDF').style.display = tab === 'tabPDF' ? 'block' : 'none';
+    document.getElementById('tabAdmin').style.display = tab === 'tabAdmin' ? 'block' : 'none';
+    document.getElementById('btnTabPDF').style.borderBottomColor = tab === 'tabPDF' ? '#6c63ff' : 'transparent';
+    document.getElementById('btnTabPDF').style.color = tab === 'tabPDF' ? '#6c63ff' : '#999';
+    document.getElementById('btnTabAdmin').style.borderBottomColor = tab === 'tabAdmin' ? '#6c63ff' : 'transparent';
+    document.getElementById('btnTabAdmin').style.color = tab === 'tabAdmin' ? '#6c63ff' : '#999';
+    if (tab === 'tabAdmin') loadUsers();
+}
+
+async function loadUsers() {
+    const res = await fetch('/api/auth/users');
+    const data = await res.json();
+    const container = document.getElementById('usersList');
+    if (!container) return;
+    if (!data.users || !data.users.length) { container.innerHTML = '<p style="color:#999;">No hay usuarios asistentes</p>'; return; }
+    container.innerHTML = data.users.map(u => `
+        <div style="border:1px solid #eee;border-radius:8px;margin-bottom:8px;overflow:hidden;">
+            <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 16px;">
+                <div>
+                    <strong>${u.nombre || u.username}</strong>
+                    <span style="display:block;font-size:0.8rem;color:#999;">@${u.username} · ${u.rol}</span>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <span style="padding:4px 10px;border-radius:99px;background:${u.activo ? '#e8f5e9' : '#fce4ec'};color:${u.activo ? '#27ae60' : '#e74c3c'};font-size:0.8rem;">${u.activo ? 'Activo' : 'Inactivo'}</span>
+                    <button onclick="toggleEditUser(${u.id})" style="padding:4px 10px;border:1px solid #6c63ff;background:transparent;color:#6c63ff;border-radius:6px;cursor:pointer;font-size:0.8rem;">✏️ Editar</button>
+                    <button onclick="deleteUser(${u.id})" style="padding:4px 10px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;border-radius:6px;cursor:pointer;font-size:0.8rem;">🗑 Eliminar</button>
+                </div>
+            </div>
+            <div id="editUser${u.id}" style="display:none;padding:16px;background:#f9f9ff;border-top:1px solid #eee;">
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+                    <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Nombre</label><input id="editNombre${u.id}" value="${u.nombre || ''}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;"></div>
+                    <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Email</label><input id="editEmail${u.id}" value="${u.email || ''}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;"></div>
+                    <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Nueva contraseña</label><input type="password" id="editPass${u.id}" placeholder="Dejar vacío para no cambiar" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;"></div>
+                    <div><label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:4px;">Rol</label>
+                    <select id="editRol${u.id}" style="width:100%;padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;">
+                        <option value="asistente" ${u.rol==='asistente'?'selected':''}>Asistente</option>
+                        <option value="admin" ${u.rol==='admin'?'selected':''}>Administrador</option>
+                    </select></div>
+                </div>
+                <div style="margin-bottom:12px;">
+                    <label style="font-size:0.8rem;font-weight:600;display:block;margin-bottom:6px;">Estado</label>
+                    <select id="editActivo${u.id}" style="padding:8px;border:1px solid #ddd;border-radius:6px;font-size:0.85rem;">
+                        <option value="1" ${u.activo?'selected':''}>Activo</option>
+                        <option value="0" ${!u.activo?'selected':''}>Inactivo</option>
+                    </select>
+                </div>
+                <div style="display:flex;gap:8px;">
+                    <button onclick="saveEditUser(${u.id})" style="padding:8px 20px;background:#6c63ff;color:white;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:0.85rem;">💾 Guardar</button>
+                    <button onclick="toggleEditUser(${u.id})" style="padding:8px 16px;background:transparent;color:#999;border:1px solid #ddd;border-radius:6px;cursor:pointer;font-size:0.85rem;">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+}
+
+async function deleteUser(id) {
+    if (!confirm('¿Eliminar este usuario?')) return;
+    await fetch('/api/auth/users?id=' + id, { method: 'DELETE' });
+    loadUsers();
+}
+
+function showCreateUser() {
+    const nombre = prompt('Nombre completo:');
+    if (!nombre) return;
+    const username = prompt('Usuario (sin espacios):');
+    if (!username) return;
+    const password = prompt('Contraseña:');
+    if (!password) return;
+    fetch('/api/auth/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, password, rol: 'asistente' })
+    }).then(() => { showToast('Usuario creado', 'success'); loadUsers(); });
+}
+
+function saveAdminSettings() {
+    const nombre = document.getElementById('adminNombre').value;
+    localStorage.setItem('adminNombre', nombre);
+    showToast('Configuración guardada', 'success');
+}
+
+function toggleUserForm() {
+    const form = document.getElementById('userForm');
+    const btn = document.getElementById('btnNuevoUsuario');
+    const isHidden = form.style.display === 'none';
+    form.style.display = isHidden ? 'block' : 'none';
+    if (btn) btn.style.display = isHidden ? 'none' : 'inline-block';
+    if (isHidden) loadCuentasParaUsuario();
+}
+
+async function loadCuentasParaUsuario() {
+    const res = await fetch('/api/accounts');
+    const data = await res.json();
+    const container = document.getElementById('cuentasCheckList');
+    if (!container) return;
+    const cuentas = data.accounts || [];
+    // Agrupar por page_id
+    const grouped = {};
+    cuentas.forEach(c => {
+        if (!grouped[c.page_id]) grouped[c.page_id] = { nombre: c.nombre || c.usuario, page_id: c.page_id };
+    });
+    container.innerHTML = Object.values(grouped).map(g => `
+        <label style="display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;">
+            <input type="checkbox" name="cuentaCheck" value="${g.page_id}"> ${g.nombre}
+        </label>
+    `).join('');
+}
+
+async function createUser() {
+    const nombre = document.getElementById('newNombre').value.trim();
+    const username = document.getElementById('newUsername').value.trim();
+    const email = document.getElementById('newEmail').value.trim();
+    const password = document.getElementById('newPassword').value;
+    const rol = document.getElementById('newRol').value;
+    const permisos = [...document.querySelectorAll('input[name="perm"]:checked')].map(c => c.value);
+    const cuentasAsignadas = [...document.querySelectorAll('input[name="cuentaCheck"]:checked')].map(c => c.value);
+
+    if (!nombre || !username || !password) { showToast('Completa los campos obligatorios', 'error'); return; }
+
+    const res = await fetch('/api/auth/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ nombre, username, email, password, rol, permisos: permisos.join(','), cuentas: cuentasAsignadas })
+    });
+    const data = await res.json();
+    if (data.success) {
+        const btnCancelar = document.querySelector('#userForm button[onclick="toggleUserForm()"]');
+        if (btnCancelar) {
+            btnCancelar.style.background = '#27ae60';
+            btnCancelar.style.color = 'white';
+            btnCancelar.style.borderColor = '#27ae60';
+            btnCancelar.textContent = '✅ Cerrar';
+            setTimeout(() => {
+                btnCancelar.style.background = 'transparent';
+                btnCancelar.style.color = '#999';
+                btnCancelar.style.borderColor = '#ddd';
+                btnCancelar.textContent = 'Cancelar';
+            }, 2000);
+        }
+        showToast('Usuario creado exitosamente', 'success');
+        setTimeout(() => {
+            toggleUserForm();
+            loadUsers();
+            document.getElementById('newNombre').value = '';
+            document.getElementById('newUsername').value = '';
+            document.getElementById('newEmail').value = '';
+            document.getElementById('newPassword').value = '';
+        }, 2000);
+    } else {
+        showToast(data.error || 'El usuario ya existe o hubo un error', 'error');
+    }
+}
+
+function previewLogo(inputId, previewId, key) {
+    const file = document.getElementById(inputId).files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (e) => {
+        const preview = document.getElementById(previewId);
+        preview.innerHTML = `<img src="${e.target.result}" style="width:100%;height:100%;object-fit:contain;">`;
+        localStorage.setItem(key, e.target.result);
+    };
+    reader.readAsDataURL(file);
+}
+
+function saveLogos() {
+    showToast('Logos guardados', 'success');
+    applyLogos();
+}
+
+function applyLogos() {
+    const logoLogin = localStorage.getItem('logoLogin');
+    const logoMenu = localStorage.getItem('logoMenu');
+    const menuLogoEl = document.querySelector('.sidebar-logo');
+    if (logoMenu && menuLogoEl) {
+        menuLogoEl.innerHTML = `<img src="${logoMenu}" style="max-height:48px;object-fit:contain;">`;
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => { applyLogos(); });
+
+function toggleEditUser(id) {
+    const el = document.getElementById('editUser' + id);
+    if (el) el.style.display = el.style.display === 'none' ? 'block' : 'none';
+}
+
+async function saveEditUser(id) {
+    const nombre = document.getElementById('editNombre' + id).value.trim();
+    const email = document.getElementById('editEmail' + id).value.trim();
+    const password = document.getElementById('editPass' + id).value;
+    const rol = document.getElementById('editRol' + id).value;
+    const activo = document.getElementById('editActivo' + id).value;
+
+    const body = { id, nombre, email, rol, activo: parseInt(activo) };
+    if (password) body.password = password;
+
+    const res = await fetch('/api/auth/users', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const data = await res.json();
+    if (data.success) {
+        showToast('Usuario actualizado', 'success');
+        loadUsers();
+    } else {
+        showToast(data.error || 'Error al actualizar', 'error');
+    }
 }

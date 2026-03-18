@@ -112,7 +112,52 @@ async function publishToFacebook(post, cuenta) {
     if (d.error) throw new Error(d.error.message);
 }
 
+async function publishStoryInstagram(post, cuenta) {
+    const apiVersion = process.env.META_API_VERSION || 'v18.0';
+    const token = cuenta.token;
+    const igId = cuenta.ig_account_id;
+    if (!igId || !post.imagen_url) return;
+
+    let media = post.imagen_url;
+    if (media && media.startsWith('[')) {
+        try { media = JSON.parse(media)[0]; } catch(e) {}
+    }
+
+    const isVid = isVideoUrl(media);
+    const body = isVid
+        ? { video_url: media, media_type: 'STORIES', access_token: token }
+        : { image_url: media, media_type: 'STORIES', access_token: token };
+
+    const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+    });
+    const mediaData = await mediaRes.json();
+    if (!mediaData.id) throw new Error('Error historia IG: ' + JSON.stringify(mediaData));
+
+    if (isVid) {
+        for (let i = 0; i < 12; i++) {
+            await new Promise(r => setTimeout(r, 5000));
+            const sr = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
+            const sd = await sr.json();
+            if (sd.status_code === 'FINISHED') break;
+            if (sd.status_code === 'ERROR') throw new Error('Error procesando video historia');
+        }
+    } else {
+        await new Promise(r => setTimeout(r, 3000));
+    }
+
+    const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
+    });
+    const pubData = await pubRes.json();
+    if (pubData.error) throw new Error(pubData.error.message);
+}
+
 async function publishToInstagram(post, cuenta) {
+    const tipo = post.tipo_publicacion || 'ig_feed';
+    if (tipo === 'ig_historia') return await publishStoryInstagram(post, cuenta);
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
     const token = cuenta.token;
     const igId = cuenta.ig_account_id;
