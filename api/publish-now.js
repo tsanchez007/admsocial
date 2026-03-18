@@ -113,6 +113,14 @@ async function publishToFacebook(post, cuenta) {
 }
 
 async function publishToInstagram(post, cuenta) {
+    // Fix: imagen_url puede ser un array JSON string
+    if (post.imagen_url && post.imagen_url.startsWith('[')) {
+        try { post.imagen_url = JSON.parse(post.imagen_url)[0]; } catch(e) {}
+    }
+    // Fix: imagen_url puede ser un array JSON string
+    if (post.imagen_url && post.imagen_url.startsWith('[')) {
+        try { post.imagen_url = JSON.parse(post.imagen_url)[0]; } catch(e) {}
+    }
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
     const token = cuenta.token;
     const igId = cuenta.ig_account_id;
@@ -129,6 +137,15 @@ async function publishToInstagram(post, cuenta) {
         });
         const mediaData = await mediaRes.json();
         if (!mediaData.id) throw new Error('No se pudo crear el contenedor de video en Instagram');
+        let status = 'IN_PROGRESS';
+        for (let i = 0; i < 12; i++) {
+            await new Promise(r => setTimeout(r, 5000));
+            const statusRes = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
+            const statusData = await statusRes.json();
+            status = statusData.status_code;
+            if (status === 'FINISHED') break;
+            if (status === 'ERROR') throw new Error('Error procesando video');
+        }
         const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -152,7 +169,9 @@ async function publishToInstagram(post, cuenta) {
         body: JSON.stringify({ image_url: mediaUrl, caption: post.contenido || '', access_token: token })
     });
     const mediaData = await mediaRes.json();
-    if (!mediaData.id) throw new Error('No se pudo crear el contenedor de media en Instagram');
+    if (!mediaData.id) throw new Error("Error IG: " + JSON.stringify(mediaData));
+    // Esperar que Instagram procese la imagen
+    await new Promise(r => setTimeout(r, 5000));
     const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },

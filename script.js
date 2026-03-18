@@ -506,6 +506,7 @@ async function publishDirectly(post) {
     const plataformas = (post.plataformas || "").split(",").filter(Boolean);
     let mediaUrls = [];
     try { mediaUrls = JSON.parse(post.imagen_url || "[]"); } catch(e) { if (post.imagen_url) mediaUrls = [post.imagen_url]; }
+    console.log('publishDirectly mediaUrls:', mediaUrls.length, mediaUrls[0]?.slice(0,60));
     // Subir base64 a Cloudinary para obtener URLs públicas
     const publicUrls = [];
     for (const m of mediaUrls) {
@@ -529,6 +530,27 @@ async function publishDirectly(post) {
         if (!cuenta) continue;
         const token = cuenta.token;
         const pageId = cuenta.page_id || cuenta.usuario;
+
+        // INSTAGRAM
+        if (plat === 'instagram') {
+            const igId = cuenta.ig_id || cuenta.ig_account_id;
+            if (!igId || mediaUrls.length === 0) continue;
+            const imageUrl = mediaUrls[0];
+            console.log('IG imageUrl:', imageUrl?.slice(0,80), 'igId:', igId);
+            const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ image_url: imageUrl, caption: post.contenido || '', access_token: token })
+            });
+            const mediaData = await mediaRes.json();
+            if (!mediaData.id) throw new Error('Instagram media error: ' + JSON.stringify(mediaData));
+            await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
+            });
+            continue;
+        }
         if (mediaUrls.length > 1) {
             // CARRUSEL
             const attachments = [];
@@ -680,12 +702,17 @@ async function schedulePost(publishNow = false) {
                     };
                     img.src = URL.createObjectURL(file);
                 });
-                const formData = new FormData();
-                formData.append("image", base64);
-                const imgRes = await fetch("https://api.imgbb.com/1/upload?key=2cdf4e5bb73df18e731e868e08a135ef", { method: "POST", body: formData });
-                const imgData = await imgRes.json();
-                if (!imgData.data?.url) { showToast("Error subiendo imagen " + (i+1), "error"); return; }
-                mediaUrls.push(imgData.data.url);
+                const cloudForm = new FormData();
+                cloudForm.append("upload_preset", "admsocial");
+                cloudForm.append("file", "data:image/jpeg;base64," + base64);
+                cloudForm.append("folder", "admsocial");
+                const cloudRes = await fetch("https://api.cloudinary.com/v1_1/dglswxsel/image/upload", { method: "POST", body: cloudForm });
+                const cloudData = await cloudRes.json();
+                console.log("Cloudinary response:", JSON.stringify(cloudData).slice(0,200));
+                if (!cloudData.secure_url) { showToast("Error subiendo imagen " + (i+1), "error"); return; }
+                const imgUrl = cloudData.secure_url.includes('.jpg') || cloudData.secure_url.includes('.png') ? cloudData.secure_url : cloudData.secure_url + '.jpg';
+                console.log('Final IG URL:', imgUrl);
+                mediaUrls.push(imgUrl);
             }
         }
     }
@@ -705,6 +732,7 @@ async function schedulePost(publishNow = false) {
             if (publishNow && data.post?.id) {
                 showToast("Publicando...", "info");
                 try {
+                    if (mediaUrls.length > 0) data.post.imagen_url = JSON.stringify(mediaUrls);
                     await publishDirectly(data.post);
                     showToast("✅ PUBLICADO", "success"); setTimeout(() => location.reload(), 2500);
                 } catch(e) {
@@ -875,8 +903,8 @@ document.getElementById('fileInput')?.addEventListener('change', function() {
         document.getElementById('uploadIcon').textContent = '🎬';
         document.getElementById('uploadHint').textContent = file.name;
     } else {
-        img.src = url; img.style.display = 'block';
-        vid.style.display = 'none';
+        if (img) { img.src = url; img.style.display = 'block'; }
+        if (vid) vid.style.display = 'none';
         document.getElementById('uploadIcon').textContent = '🖼';
         document.getElementById('uploadHint').textContent = file.name;
     }

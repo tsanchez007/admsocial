@@ -5,8 +5,8 @@ export default async function handler(req, res) {
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
-    const frontendUrl = process.env.FRONTEND_URL;
-    const redirectUri = encodeURIComponent(`${frontendUrl}/api/auth/callback`);
+    const frontendUrl = (process.env.FRONTEND_URL || "https://admsocial.vercel.app").replace(/["']/g, "");
+    const redirectUri = encodeURIComponent("https://admsocial.vercel.app/api/auth/callback");
 
     if (error) return res.redirect(`${frontendUrl}?error=${error}`);
 
@@ -47,6 +47,7 @@ export default async function handler(req, res) {
                     const igRes = await fetch(`https://graph.facebook.com/${apiVersion}/${page.id}?fields=instagram_business_account&access_token=${page.access_token}`);
                     const igData = await igRes.json();
 
+                    console.log('igData for', page.name, ':', JSON.stringify(igData));
                     if (igData.instagram_business_account?.id) {
                         const igId = igData.instagram_business_account.id;
                         // Obtener nombre del perfil de Instagram
@@ -62,7 +63,7 @@ export default async function handler(req, res) {
                         );
                     }
                 } catch(e) {
-                    console.log('No Instagram account for page:', page.name, e.message);
+                    console.log('No Instagram account for page:', page.name, e.message, JSON.stringify(e));
                 }
             }
         }
