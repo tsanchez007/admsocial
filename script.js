@@ -368,13 +368,7 @@ function exportPDF() {
     const mediaUrls = [];
     const rows = posts.map(post => {
         const fecha = new Date(post.fecha_programada).toLocaleString('es-DO',{dateStyle:'full',timeStyle:'short'});
-        const mediaRaw = post.imagen_url || '';
-        const isVideo = mediaRaw.startsWith('data:video') || mediaRaw.match(/\.(mp4|mov|webm)/i);
-        const mediaHtml = mediaRaw
-            ? isVideo
-                ? `<video src="${mediaRaw}" controls style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;"></video>`
-                : (() => { const idx = mediaUrls.push(mediaRaw) - 1; return `<a href="data:text/html,<img src='${mediaRaw.replace(/'/g,"\\'")}' style='max-width:100%;max-height:100vh;object-fit:contain;display:block;margin:auto;background:%23000;'>" target="_blank" style="display:block;"><img src="${mediaRaw}" style="width:100%;height:auto;max-height:300px;object-fit:contain;border-radius:8px;border:1px solid #ddd;display:block;cursor:pointer;" title="Clic para ver en tamaño completo"></a>`; })()
-            : '<div style="width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;">Sin imagen</div>';
+        const publicUrls=(function(){try{var p=JSON.parse(post.imagen_url||"[]");return Array.isArray(p)?p.filter(function(u){return u&&u.startsWith("http")}):(post.imagen_url&&post.imagen_url.startsWith("http")?[post.imagen_url]:[]);}catch(e){return post.imagen_url&&post.imagen_url.startsWith("http")?[post.imagen_url]:[]}})();var firstUrl=publicUrls[0]||null;var isVideo=firstUrl&&firstUrl.includes("/video/");var thumbSrc=isVideo?firstUrl.replace("/video/upload/","/video/upload/so_0,w_300,h_300,c_fill/").replace(/.(mp4|mov|webm)$/,".jpg"):firstUrl;var mediaHtml=firstUrl?"<a href='"+firstUrl+"' target='_blank'><img src='"+thumbSrc+"' style='width:100%;height:150px;object-fit:cover;border-radius:8px;border:1px solid #ddd;display:block;'></a>":"<div style='width:100%;height:80px;background:#f0f0f0;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#999;'>Sin imagen</div>";
 
         const partes = [];
         if (showImage) partes.push(`<div style="width:200px;flex-shrink:0;">${mediaHtml}</div>`);
