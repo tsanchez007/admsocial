@@ -191,6 +191,8 @@ export default async function handler(req, res) {
         const results = [];
         for (const post of posts) {
             try {
+                // Marcar como procesando ANTES de publicar para evitar duplicados
+                await db.query("UPDATE publicaciones SET estado = 'procesando' WHERE id = ?", [post.id]);
                 const plataformas = (post.plataformas || '').split(',').filter(Boolean);
                 for (const plat of plataformas) {
                     const cuenta = cuentas.find(c => c.plataforma === plat && (!post.cuenta_nombre || post.cuenta_nombre.includes(c.usuario) || post.cuenta_nombre.includes(c.nombre || '')));

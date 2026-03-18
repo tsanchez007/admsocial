@@ -945,7 +945,32 @@ function renderCarouselGrid() {
         const areaHeight = (uploadArea?.offsetHeight || 400) - 16;
         const count = carouselFiles.length;
         let itemW;
-        if (count === 1) itemW = areaWidth;
+        if (count === 1) {
+            if (!file.type.startsWith('video/')) {
+                const tempImg = new Image();
+                tempImg.onload = () => {
+                    const imgRatio = tempImg.width / tempImg.height;
+                    const areaRatio = areaWidth / areaHeight;
+                    let newW, newH;
+                    if (imgRatio > areaRatio) {
+                        // imagen mas ancha — limitar por ancho
+                        newW = areaWidth;
+                        newH = areaWidth / imgRatio;
+                    } else {
+                        // imagen mas alta — limitar por alto
+                        newH = areaHeight;
+                        newW = areaHeight * imgRatio;
+                    }
+                    wrapper.style.width = newW + 'px';
+                    wrapper.style.height = newH + 'px';
+                    wrapper.style.margin = '0 auto';
+                };
+                tempImg.src = URL.createObjectURL(file);
+                itemW = areaWidth; // temporal hasta que cargue
+            } else {
+                itemW = areaWidth;
+            }
+        }
         else if (count === 2) itemW = Math.floor((areaWidth - 8) / 2);
         else itemW = Math.floor((areaWidth - 16) / 3);
         wrapper.style.cssText = 'position:relative;border-radius:8px;overflow:hidden;border:2px solid #6c63ff;cursor:grab;flex-shrink:0;width:' + itemW + 'px;height:' + areaHeight + 'px;scroll-snap-align:start;object-fit:cover;';
@@ -985,7 +1010,7 @@ function renderCarouselGrid() {
             wrapper.appendChild(v);
         } else {
             const img = document.createElement('img');
-            img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:cover;';
+            img.src = url; img.style.cssText = 'width:100%;height:100%;object-fit:contain;background:#f8f8f8;';
             wrapper.appendChild(img);
         }
         const badge = document.createElement('div');
