@@ -8,7 +8,8 @@
   ],
   "rewrites": [
     { "source": "/api/generate-image",         "destination": "/api/generate-image" },
-    { "source": "/api/auth/password-reset",     "destination": "/api/auth/password-reset" },
+    { "source": "/api/auth/forgot",             "destination": "/api/auth/users" },
+    { "source": "/api/auth/reset",              "destination": "/api/auth/users" },
     { "source": "/api/notif",                   "destination": "/api/notif" },
     { "source": "/login",                       "destination": "/login.html" },
     { "source": "/conectar",                    "destination": "/api/conectar" },
@@ -16,14 +17,13 @@
     { "source": "/api/auth/users",              "destination": "/api/auth/users" },
     { "source": "/api/auth/login",              "destination": "/api/auth/login" },
     { "source": "/api/auth/callback",           "destination": "/api/auth/callback" },
-    { "source": "/api/accounts",               "destination": "/api/accounts" },
-    { "source": "/api/migrate",                "destination": "/api/migrate" },
-    { "source": "/api/publish-now",            "destination": "/api/publish-now" },
-    { "source": "/api/publish",                "destination": "/api/publish" },
-    { "source": "/api/posts/:id",              "destination": "/api/posts/[id]" },
-    { "source": "/api/posts",                  "destination": "/api/posts" },
-    { "source": "/script.js",                  "destination": "/script.js" },
-    { "source": "/style.css",                  "destination": "/style.css" },
-    { "source": "/(.*)",                       "destination": "/index.html" }
+    { "source": "/api/accounts",                "destination": "/api/accounts" },
+    { "source": "/api/publish-now",             "destination": "/api/publish-now" },
+    { "source": "/api/publish",                 "destination": "/api/publish" },
+    { "source": "/api/posts/:id",               "destination": "/api/posts/[id]" },
+    { "source": "/api/posts",                   "destination": "/api/posts" },
+    { "source": "/script.js",                   "destination": "/script.js" },
+    { "source": "/style.css",                   "destination": "/style.css" },
+    { "source": "/(.*)",                        "destination": "/index.html" }
   ]
 }
