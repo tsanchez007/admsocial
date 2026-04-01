@@ -2,6 +2,7 @@
   "dependencies": {
     "cloudinary": "^2.9.0",
     "formidable": "^3.5.4",
-    "mysql2": "^3.19.1"
+    "mysql2": "^3.19.1",
+    "nodemailer": "^8.0.4"
   }
 }
