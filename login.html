@@ -231,6 +231,18 @@
 
   function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
 
+  function callAppsScript(payload, callback) {
+    const url = APPS_SCRIPT_URL + '?callback=appsScriptCallback&data=' + encodeURIComponent(JSON.stringify(payload));
+    window.appsScriptCallback = function(data) {
+      document.head.removeChild(document.getElementById('appsScriptTag'));
+      callback(data);
+    };
+    const script = document.createElement('script');
+    script.id = 'appsScriptTag';
+    script.src = url;
+    document.head.appendChild(script);
+  }
+
   async function sendCode() {
     const email = document.getElementById('resetEmail').value.trim();
     const errorEl = document.getElementById('step1Error');
@@ -240,24 +252,16 @@
     if (!/\S+@\S+\.\S+/.test(email)) { showError(errorEl, 'Email inválido'); return; }
     resetEmailValue = email;
     btn.disabled = true; btn.textContent = 'Enviando...';
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'send', email })
-      });
-      const data = await res.json();
+    callAppsScript({ action: 'send', email }, function(data) {
+      btn.disabled = false; btn.textContent = 'Enviar código';
       if (data.success) {
-        document.getElementById('step2Desc').textContent = `Ingresa el código que enviamos a ${email}. Expira en 15 minutos.`;
+        document.getElementById('step2Desc').textContent = 'Ingresa el código que enviamos a ' + email + '. Expira en 15 minutos.';
         showStep('step2');
         setTimeout(() => document.getElementById('resetCode').focus(), 100);
       } else {
         showError(errorEl, data.error || 'Error al enviar el código');
       }
-    } catch(e) {
-      showError(errorEl, 'Error de conexión: ' + e.message);
-    } finally {
-      btn.disabled = false; btn.textContent = 'Enviar código';
-    }
+    });
   }
 
   async function verifyCode() {
@@ -277,18 +281,13 @@
     errorEl.style.display = 'none';
     if (newPassword.length < 6) { showError(errorEl, 'La contraseña debe tener al menos 6 caracteres'); return; }
     if (newPassword !== confirmPassword) { showError(errorEl, 'Las contraseñas no coinciden'); return; }
-    try {
-      const res = await fetch(APPS_SCRIPT_URL, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'verify', email: resetEmailValue, code, newPassword })
-      });
-      const data = await res.json();
+    callAppsScript({ action: 'verify', email: resetEmailValue, code, newPassword }, function(data) {
       if (data.success) { showStep('step4'); }
       else {
         showError(errorEl, data.error || 'Error al cambiar la contraseña');
         if (data.error && (data.error.includes('Código') || data.error.includes('expirado'))) showStep('step2');
       }
-    } catch(e) { showError(errorEl, 'Error de conexión: ' + e.message); }
+    });
   }
 </script>
 
