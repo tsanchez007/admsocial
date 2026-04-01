@@ -291,10 +291,10 @@
     resetEmailValue = email;
     btn.disabled = true; btn.textContent = 'Enviando...';
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch('/api/auth/password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email })
+        body: JSON.stringify({ action: 'forgot', email })
       });
       const data = await res.json();
       if (data.success) {
@@ -330,10 +330,10 @@
     if (newPassword.length < 6) { showError(errorEl, 'La contraseña debe tener al menos 6 caracteres'); return; }
     if (newPassword !== confirmPassword) { showError(errorEl, 'Las contraseñas no coinciden'); return; }
     try {
-      const res = await fetch('/api/auth/reset-password', {
+      const res = await fetch('/api/auth/password-reset', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: resetEmailValue, code, newPassword })
+        body: JSON.stringify({ action: 'reset', email: resetEmailValue, code, newPassword })
       });
       const data = await res.json();
       if (data.success) {
