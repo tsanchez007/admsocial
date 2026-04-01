@@ -1,11 +1,9 @@
 // api/auth/password-reset.js
-// Maneja tanto el envío del código como el reset de contraseña
-// POST con { action: 'forgot', email } → envía código
-// POST con { action: 'reset', email, code, newPassword } → cambia contraseña
+// POST { action: 'forgot', email } → envía código
+// POST { action: 'reset', email, code, newPassword } → cambia contraseña
 
 import mysql from 'mysql2/promise';
 import crypto from 'crypto';
-import nodemailer from 'nodemailer';
 
 const hashPassword = (password) =>
   crypto.createHash('sha256').update(password + 'admsocial_salt').digest('hex');
@@ -17,6 +15,8 @@ const dbConfig = {
   database: process.env.DB_NAME,
 };
 
+const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaq6CJ_MzxmoJJ7XygGV8PegelnNuTshZwZvmckGG5QLA1YF5obfLAiG7bHehgjGMt/exec';
+
 export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
@@ -25,17 +25,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   const { action } = req.body;
-
-  if (action === 'forgot') {
-    return handleForgot(req, res);
-  } else if (action === 'reset') {
-    return handleReset(req, res);
-  } else {
-    return res.status(400).json({ error: 'Action inválida. Usa "forgot" o "reset"' });
-  }
+  if (action === 'forgot') return handleForgot(req, res);
+  if (action === 'reset')  return handleReset(req, res);
+  return res.status(400).json({ error: 'Action inválida. Usa "forgot" o "reset"' });
 }
 
-// ── Enviar código por email ─────────────────────────────────────────
 async function handleForgot(req, res) {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email requerido' });
@@ -46,7 +40,6 @@ async function handleForgot(req, res) {
       'SELECT * FROM usuarios WHERE email = ? AND activo = 1', [email]
     );
 
-    // Siempre responder igual por seguridad
     if (!rows.length) {
       await db.end();
       return res.json({ success: true, message: 'Si el email existe, recibirás un código.' });
@@ -75,38 +68,19 @@ async function handleForgot(req, res) {
     );
     await db.end();
 
-    // Enviar email
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.GMAIL_USER,
-        pass: process.env.GMAIL_APP_PASSWORD,
-      },
+    // Enviar email via Google Apps Script
+    const emailRes = await fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email,
+        code,
+        nombre: user.nombre || user.username
+      })
     });
 
-    await transporter.sendMail({
-      from: `"AdmSocial" <${process.env.GMAIL_USER}>`,
-      to: email,
-      subject: '🔐 Código de recuperación — AdmSocial',
-      html: `
-        <div style="font-family:'Segoe UI',sans-serif;max-width:480px;margin:0 auto;background:#f4f5fb;padding:32px;border-radius:16px;">
-          <div style="text-align:center;margin-bottom:24px;">
-            <div style="font-size:2rem;font-weight:800;color:#6c63ff;">◈ AdmSocial</div>
-            <p style="color:#888;margin-top:4px;font-size:0.9rem;">Gestor de Redes Sociales</p>
-          </div>
-          <div style="background:white;border-radius:12px;padding:28px;text-align:center;box-shadow:0 2px 12px rgba(0,0,0,0.08);">
-            <p style="font-size:1rem;color:#333;margin-bottom:8px;">Hola <strong>${user.nombre || user.username}</strong>,</p>
-            <p style="font-size:0.9rem;color:#666;margin-bottom:24px;">Recibimos una solicitud para restablecer tu contraseña. Usa este código:</p>
-            <div style="background:#f4f5fb;border:2px dashed #6c63ff;border-radius:12px;padding:20px;margin:0 auto;width:fit-content;">
-              <span style="font-size:2.5rem;font-weight:900;letter-spacing:10px;color:#6c63ff;">${code}</span>
-            </div>
-            <p style="font-size:0.8rem;color:#999;margin-top:16px;">⏱ Este código expira en <strong>15 minutos</strong></p>
-            <p style="font-size:0.8rem;color:#999;margin-top:8px;">Si no solicitaste esto, ignora este correo.</p>
-          </div>
-          <p style="text-align:center;font-size:0.75rem;color:#bbb;margin-top:20px;">© 2026 AdmSocial · admsocial.vercel.app</p>
-        </div>
-      `,
-    });
+    const emailData = await emailRes.json();
+    if (!emailData.success) throw new Error('Error enviando email: ' + emailData.error);
 
     return res.json({ success: true, message: 'Código enviado al correo.' });
 
@@ -117,7 +91,6 @@ async function handleForgot(req, res) {
   }
 }
 
-// ── Verificar código y cambiar contraseña ───────────────────────────
 async function handleReset(req, res) {
   const { email, code, newPassword } = req.body;
   if (!email || !code || !newPassword)
