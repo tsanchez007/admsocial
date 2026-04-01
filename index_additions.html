@@ -1,0 +1,168 @@
+<!-- ================================================================
+  INSTRUCCIONES: 
+  1) Agrega el BOTÓN DEL SIDEBAR justo antes del botón "Conectar":
+     (busca: onclick="shareConnectLink()")
+  
+  2) Agrega la SECCIÓN completa justo antes de </main>
+================================================================ -->
+
+
+<!-- ═══════════════════════════════════════════════════
+  PARTE 1: BOTÓN SIDEBAR
+  Pégalo ANTES de este botón en el sidebar:
+  <button class="nav-item" onclick="shareConnectLink()"...>
+════════════════════════════════════════════════════════ -->
+
+<button class="nav-item" data-section="imageCreator">
+  <span class="nav-icon">✨</span>
+  <span>Crear Imagen</span>
+</button>
+
+
+<!-- ═══════════════════════════════════════════════════
+  PARTE 2: SECCIÓN COMPLETA
+  Pégala ANTES de </main>
+════════════════════════════════════════════════════════ -->
+
+<section class="section" id="imageCreator">
+  <div class="section-header">
+    <h1>✨ Crear Imagen con IA</h1>
+    <p>Genera imágenes con Gemini AI y úsalas directamente en tus publicaciones</p>
+  </div>
+
+  <div class="compose-grid">
+
+    <!-- ── Panel Izquierdo: Prompt ── -->
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
+      <h2>DESCRIPCIÓN</h2>
+
+      <!-- Textarea del prompt -->
+      <div class="textarea-wrap">
+        <textarea
+          id="imagePrompt"
+          rows="6"
+          placeholder="Describe la imagen que quieres generar...
+
+Ej: Una taza de café humeante sobre una mesa de madera, luz cálida de mañana, estilo fotorrealista, para redes sociales"
+          style="resize:vertical;"
+        ></textarea>
+      </div>
+
+      <!-- Chips de sugerencias rápidas -->
+      <div>
+        <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px;font-weight:600;">⚡ Sugerencias rápidas</p>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;">
+          <button class="prompt-chip" onclick="setPromptChip('📱 Post para Instagram, composición cuadrada, colores vibrantes, moderno y atractivo')">📱 Post Instagram</button>
+          <button class="prompt-chip" onclick="setPromptChip('Foto profesional de producto sobre fondo blanco limpio, iluminación de estudio, alta calidad, e-commerce')">🛍️ Foto producto</button>
+          <button class="prompt-chip" onclick="setPromptChip('Diseño visual llamativo para promoción especial con 50% de descuento, colores alegres, tipografía moderna, banner publicitario')">🎉 Promoción</button>
+          <button class="prompt-chip" onclick="setPromptChip('Paisaje natural inspiracional al amanecer con montañas, colores cálidos naranjas y rosas, fotografía profesional, motivacional')">🌅 Inspiracional</button>
+          <button class="prompt-chip" onclick="setPromptChip('Imagen corporativa profesional, personas en reunión de negocios, tonos azules y grises, ambiente moderno de oficina')">💼 Corporativa</button>
+          <button class="prompt-chip" onclick="setPromptChip('Comida deliciosa presentada elegantemente en restaurante, fotografía gastronómica, iluminación perfecta, apetitosa')">🍽️ Gastronomía</button>
+          <button class="prompt-chip" onclick="setPromptChip('Publicación para redes sociales sobre fitness y ejercicio, persona activa, colores energéticos, motivacional')">💪 Fitness</button>
+          <button class="prompt-chip" onclick="setPromptChip('Imagen abstracta y artística con colores modernos, diseño minimalista, fondo degradado, para perfil de redes sociales')">🎨 Arte abstracto</button>
+        </div>
+      </div>
+
+      <!-- Selector de estilo -->
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">🎨 Estilo visual</label>
+        <select id="imageStyle" class="date-input">
+          <option value="">Sin estilo específico</option>
+          <option value="fotorrealista, alta calidad, 4K, detallado">📷 Fotorrealista 4K</option>
+          <option value="ilustración digital, colores vibrantes, estilo moderno">🎨 Ilustración digital</option>
+          <option value="minimalista, fondo blanco, limpio, simple, elegante">⬜ Minimalista</option>
+          <option value="estilo cinematográfico, dramático, cinemascope, iluminación perfecta">🎬 Cinematográfico</option>
+          <option value="acuarela, artístico, suave, tonos pastel">🖌️ Acuarela</option>
+          <option value="3D render, moderno, brillante, materiales realistas">🔮 3D Render</option>
+          <option value="vintage, retro, tonos cálidos, estilo años 80">📻 Vintage / Retro</option>
+          <option value="flat design, vectorial, colores planos, moderno">📐 Flat Design</option>
+        </select>
+      </div>
+
+      <!-- Proporción -->
+      <div>
+        <label style="font-size:0.8rem;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">📐 Proporción</label>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="ratio-btn active-ratio" data-ratio="cuadrada 1:1" onclick="selectRatio(this)">⬛ 1:1 Feed</button>
+          <button class="ratio-btn" data-ratio="vertical 9:16" onclick="selectRatio(this)">📱 9:16 Historia</button>
+          <button class="ratio-btn" data-ratio="horizontal 16:9" onclick="selectRatio(this)">🖥️ 16:9 Banner</button>
+          <button class="ratio-btn" data-ratio="horizontal 1.91:1" onclick="selectRatio(this)">📘 1.91:1 FB</button>
+        </div>
+      </div>
+
+      <!-- Botón generar -->
+      <button class="btn-primary" id="generateImageBtn" onclick="generateImage()">
+        ✨ Generar Imagen con IA
+      </button>
+
+      <!-- Error -->
+      <div id="generateError" style="display:none;padding:10px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:0.85rem;"></div>
+    </div>
+
+    <!-- ── Panel Derecho: Resultado ── -->
+    <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
+      <h2>RESULTADO</h2>
+
+      <!-- Área de imagen -->
+      <div id="imageResultBox" style="flex:1;min-height:360px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg3);position:relative;transition:border-color 0.3s;">
+
+        <!-- Placeholder -->
+        <div id="imageResultPlaceholder" style="text-align:center;color:var(--text2);padding:2rem;">
+          <div style="font-size:3.5rem;margin-bottom:12px;">🖼️</div>
+          <p style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">La imagen aparecerá aquí</p>
+          <p style="font-size:0.78rem;opacity:0.6;">Escribe una descripción y presiona Generar</p>
+        </div>
+
+        <!-- Loading spinner -->
+        <div id="imageLoading" style="display:none;flex-direction:column;align-items:center;gap:16px;color:var(--text2);">
+          <div style="width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spinImg 0.8s linear infinite;"></div>
+          <div style="text-align:center;">
+            <p style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">Generando con Gemini AI...</p>
+            <p style="font-size:0.78rem;opacity:0.6;">Esto puede tomar unos segundos</p>
+          </div>
+        </div>
+
+        <!-- Imagen generada -->
+        <img
+          id="generatedImage"
+          style="display:none;width:100%;height:100%;object-fit:contain;border-radius:10px;"
+          alt="Imagen generada por IA"
+        >
+      </div>
+
+      <!-- Botones de acción (aparecen cuando hay imagen) -->
+      <div id="imageActions" style="display:none;flex-direction:column;gap:8px;">
+        <button
+          onclick="useGeneratedImage()"
+          style="width:100%;padding:0.8rem;background:var(--accent);color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;"
+          onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'"
+        >
+          📤 Usar esta imagen en el Dashboard
+        </button>
+        <div style="display:flex;gap:8px;">
+          <button
+            onclick="downloadGeneratedImage()"
+            class="btn-secondary"
+            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;"
+          >
+            ⬇️ Descargar
+          </button>
+          <button
+            onclick="generateImage()"
+            class="btn-secondary"
+            style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;"
+          >
+            🔄 Regenerar
+          </button>
+        </div>
+      </div>
+
+      <!-- Historial de últimas generadas -->
+      <div id="imageHistory" style="display:none;">
+        <p style="font-size:0.78rem;color:var(--text2);font-weight:600;margin-bottom:8px;">🕓 Generadas anteriormente</p>
+        <div id="imageHistoryGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      </div>
+    </div>
+
+  </div>
+</section>

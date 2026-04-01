@@ -19,6 +19,7 @@ export default async function handler(req, res) {
         try { await db.query("ALTER TABLE usuarios MODIFY COLUMN rol ENUM('ceo','admin','asistente') DEFAULT 'asistente'"); } catch(e) {}
         try { await db.query("UPDATE usuarios SET rol='ceo' WHERE username='tsanchez'"); } catch(e) {}
         try { await db.query("ALTER TABLE usuarios ADD COLUMN IF NOT EXISTS permisos TEXT DEFAULT NULL"); } catch(e) {}
+        await db.query("CREATE TABLE IF NOT EXISTS notificaciones (id INT AUTO_INCREMENT PRIMARY KEY, tipo VARCHAR(100), mensaje TEXT, leido TINYINT DEFAULT 0, fecha DATETIME DEFAULT CURRENT_TIMESTAMP) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4");
         await db.end();
         return res.json({ success: true, message: "Migracion completada" });
     } catch (err) {

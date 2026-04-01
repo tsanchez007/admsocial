@@ -68,6 +68,7 @@ export default async function handler(req, res) {
             }
         }
 
+        try { await db.query("INSERT INTO notificaciones (tipo, mensaje) VALUES (?,?)", ["nueva_cuenta", "Nueva cuenta conectada: " + (userData.name || "Usuario")]); } catch(e) {}
         await db.end();
         const state = req.query.state || '';
         if (state === 'conectar') {
