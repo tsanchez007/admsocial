@@ -32,74 +32,27 @@
     }
     input:focus { outline: none; border-color: #6c63ff; }
     .btn {
-      width: 100%; padding: 0.85rem;
-      background: #6c63ff; color: white;
-      border: none; border-radius: 8px;
-      font-size: 1rem; font-weight: 700;
+      width: 100%; padding: 0.85rem; background: #6c63ff; color: white;
+      border: none; border-radius: 8px; font-size: 1rem; font-weight: 700;
       cursor: pointer; transition: all 0.2s; margin-top: 0.5rem;
     }
     .btn:hover { background: #a78bfa; transform: translateY(-1px); }
     .btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
-    .forgot-link {
-      display: block; text-align: center; color: #6c63ff;
-      font-size: 0.85rem; cursor: pointer; margin-top: 1rem; text-decoration: none;
-    }
-    .forgot-link:hover { color: #a78bfa; text-decoration: underline; }
     .error-msg {
       background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3);
       color: #ef4444; border-radius: 8px; padding: 10px 14px;
       font-size: 0.85rem; margin-bottom: 1rem; display: none;
     }
-    .success-msg {
-      background: rgba(16,185,129,0.1); border: 1px solid rgba(16,185,129,0.3);
-      color: #10b981; border-radius: 8px; padding: 10px 14px;
-      font-size: 0.85rem; margin-bottom: 1rem; display: none;
-    }
-    .modal-overlay {
-      display: none; position: fixed; inset: 0;
-      background: rgba(0,0,0,0.7); z-index: 1000;
-      align-items: center; justify-content: center; padding: 1rem;
-    }
-    .modal-overlay.active { display: flex; }
-    .modal {
-      background: #1a1d2e; border: 1px solid #2e3150;
-      border-radius: 16px; padding: 2rem; width: 100%; max-width: 400px;
-      box-shadow: 0 8px 40px rgba(0,0,0,0.5);
-    }
-    .modal h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
-    .modal p { font-size: 0.85rem; color: #8b92c8; margin-bottom: 1.25rem; line-height: 1.6; }
-    .modal-step { display: none; }
-    .modal-step.active { display: block; }
-    .code-input {
-      font-size: 2rem; font-weight: 800; letter-spacing: 12px; text-align: center;
-      background: #252840; border: 2px solid #2e3150; border-radius: 10px;
-      color: #6c63ff; padding: 1rem; width: 100%;
-    }
-    .code-input:focus { outline: none; border-color: #6c63ff; }
-    .modal-actions { display: flex; gap: 8px; margin-top: 1rem; }
-    .btn-secondary {
-      flex: 1; padding: 0.75rem; background: transparent; color: #8b92c8;
-      border: 1px solid #2e3150; border-radius: 8px; font-size: 0.9rem;
-      cursor: pointer; transition: all 0.2s;
-    }
-    .btn-secondary:hover { background: #252840; color: #e8eaf6; }
-    .resend-link {
-      display: block; text-align: center; color: #8b92c8;
-      font-size: 0.8rem; cursor: pointer; margin-top: 0.75rem;
-    }
-    .resend-link:hover { color: #6c63ff; }
   </style>
 </head>
 <body>
-
 <div class="login-card">
   <div class="logo">
     <div class="logo-icon">◈</div>
     <div class="logo-text" id="loginTitle">AdmSocial</div>
-    <div class="logo-sub" id="loginSubtitle">Gestor de Redes Sociales</div>
+    <div class="logo-sub">Gestor de Redes Sociales</div>
   </div>
   <div class="error-msg" id="errorMsg"></div>
-  <div class="success-msg" id="successMsg"></div>
   <div class="form-group">
     <label>Usuario</label>
     <input type="text" id="username" placeholder="Tu usuario" autocomplete="username">
@@ -109,75 +62,14 @@
     <input type="password" id="password" placeholder="Tu contraseña" autocomplete="current-password">
   </div>
   <button class="btn" id="loginBtn" onclick="doLogin()">Iniciar Sesión</button>
-  <a class="forgot-link" onclick="openForgot()">¿Olvidaste tu contraseña?</a>
-</div>
-
-<!-- Modal recuperar contraseña -->
-<div class="modal-overlay" id="forgotModal">
-  <div class="modal">
-    <div class="modal-step active" id="step1">
-      <h3>🔐 Recuperar contraseña</h3>
-      <p>Ingresa el email asociado a tu cuenta y te enviaremos un código de 6 dígitos.</p>
-      <div class="error-msg" id="step1Error"></div>
-      <div class="form-group">
-        <label>Email</label>
-        <input type="email" id="resetEmail" placeholder="tu@email.com">
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeForgot()">Cancelar</button>
-        <button class="btn" style="flex:2;" id="sendCodeBtn" onclick="sendCode()">Enviar código</button>
-      </div>
-    </div>
-    <div class="modal-step" id="step2">
-      <h3>📧 Revisa tu email</h3>
-      <p id="step2Desc">Ingresa el código de 6 dígitos que enviamos a tu correo. Expira en 15 minutos.</p>
-      <div class="error-msg" id="step2Error"></div>
-      <div class="form-group" style="margin-top:0.5rem;">
-        <input type="text" class="code-input" id="resetCode" placeholder="000000" maxlength="6" inputmode="numeric">
-      </div>
-      <a class="resend-link" onclick="sendCode()">¿No lo recibiste? Reenviar código</a>
-      <div class="modal-actions" style="margin-top:1rem;">
-        <button class="btn-secondary" onclick="closeForgot()">Cancelar</button>
-        <button class="btn" style="flex:2;" onclick="verifyCode()">Verificar código</button>
-      </div>
-    </div>
-    <div class="modal-step" id="step3">
-      <h3>🔑 Nueva contraseña</h3>
-      <p>Ingresa tu nueva contraseña. Debe tener al menos 6 caracteres.</p>
-      <div class="error-msg" id="step3Error"></div>
-      <div class="form-group">
-        <label>Nueva contraseña</label>
-        <input type="password" id="newPassword" placeholder="Mínimo 6 caracteres">
-      </div>
-      <div class="form-group">
-        <label>Confirmar contraseña</label>
-        <input type="password" id="confirmPassword" placeholder="Repite la contraseña">
-      </div>
-      <div class="modal-actions">
-        <button class="btn-secondary" onclick="closeForgot()">Cancelar</button>
-        <button class="btn" style="flex:2;" onclick="resetPassword()">Cambiar contraseña</button>
-      </div>
-    </div>
-    <div class="modal-step" id="step4">
-      <div style="text-align:center;padding:1rem 0;">
-        <div style="font-size:3rem;margin-bottom:12px;">✅</div>
-        <h3 style="margin-bottom:8px;">¡Contraseña actualizada!</h3>
-        <p>Tu contraseña fue cambiada exitosamente. Ya puedes iniciar sesión.</p>
-        <button class="btn" style="margin-top:1.5rem;" onclick="closeForgot()">Ir al login</button>
-      </div>
-    </div>
-  </div>
 </div>
 
 <script>
-  // URL del Apps Script
-  const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbyaq6CJ_MzxmoJJ7XygGV8PegelnNuTshZwZvmckGG5QLA1YF5obfLAiG7bHehgjGMt/exec';
-
-  const logoLogin = localStorage.getItem('logoLogin');
   const adminNombre = localStorage.getItem('adminNombre');
+  const logoLogin = localStorage.getItem('logoLogin');
   if (adminNombre) document.getElementById('loginTitle').textContent = adminNombre;
   if (logoLogin) {
-    document.querySelector('.logo').innerHTML = `<img src="${logoLogin}" style="max-height:80px;object-fit:contain;margin-bottom:8px;"><div class="logo-sub">Gestor de Redes Sociales</div>`;
+    document.querySelector('.logo').innerHTML = `<img src="${logoLogin}" style="max-height:80px;object-fit:contain;margin-bottom:8px;"><div style="font-size:0.8rem;color:#8b92c8;margin-top:4px;">Gestor de Redes Sociales</div>`;
   }
 
   document.getElementById('password').addEventListener('keydown', e => { if (e.key === 'Enter') doLogin(); });
@@ -189,7 +81,7 @@
     const btn = document.getElementById('loginBtn');
     const errorEl = document.getElementById('errorMsg');
     errorEl.style.display = 'none';
-    if (!username || !password) { showError(errorEl, 'Completa todos los campos'); return; }
+    if (!username || !password) { errorEl.textContent = 'Completa todos los campos'; errorEl.style.display = 'block'; return; }
     btn.disabled = true; btn.textContent = 'Ingresando...';
     try {
       const res = await fetch('/api/auth/users', {
@@ -198,98 +90,10 @@
       });
       const data = await res.json();
       if (data.success) { sessionStorage.setItem('user', JSON.stringify(data.user)); window.location.href = '/'; }
-      else showError(errorEl, data.error || 'Usuario o contraseña incorrectos');
-    } catch(e) { showError(errorEl, 'Error de conexión'); }
+      else { errorEl.textContent = data.error || 'Usuario o contraseña incorrectos'; errorEl.style.display = 'block'; }
+    } catch(e) { errorEl.textContent = 'Error de conexión'; errorEl.style.display = 'block'; }
     finally { btn.disabled = false; btn.textContent = 'Iniciar Sesión'; }
   }
-
-  let resetEmailValue = '';
-
-  function openForgot() {
-    const mainError = document.getElementById('errorMsg');
-    if (mainError) { mainError.style.display = 'none'; mainError.textContent = ''; }
-    document.getElementById('forgotModal').classList.add('active');
-    showStep('step1');
-  }
-
-  function closeForgot() {
-    document.getElementById('forgotModal').classList.remove('active');
-    ['resetEmail','resetCode','newPassword','confirmPassword'].forEach(id => {
-      const el = document.getElementById(id); if (el) el.value = '';
-    });
-    ['step1Error','step2Error','step3Error'].forEach(id => {
-      const el = document.getElementById(id);
-      if (el) { el.style.display = 'none'; el.textContent = ''; }
-    });
-    showStep('step1');
-  }
-
-  function showStep(stepId) {
-    document.querySelectorAll('.modal-step').forEach(s => s.classList.remove('active'));
-    document.getElementById(stepId).classList.add('active');
-  }
-
-  function showError(el, msg) { el.textContent = msg; el.style.display = 'block'; }
-
-  function callAppsScript(payload, callback) {
-    const url = APPS_SCRIPT_URL + '?callback=appsScriptCallback&data=' + encodeURIComponent(JSON.stringify(payload));
-    window.appsScriptCallback = function(data) {
-      document.head.removeChild(document.getElementById('appsScriptTag'));
-      callback(data);
-    };
-    const script = document.createElement('script');
-    script.id = 'appsScriptTag';
-    script.src = url;
-    document.head.appendChild(script);
-  }
-
-  async function sendCode() {
-    const email = document.getElementById('resetEmail').value.trim();
-    const errorEl = document.getElementById('step1Error');
-    const btn = document.getElementById('sendCodeBtn');
-    errorEl.style.display = 'none';
-    if (!email) { showError(errorEl, 'Ingresa tu email'); return; }
-    if (!/\S+@\S+\.\S+/.test(email)) { showError(errorEl, 'Email inválido'); return; }
-    resetEmailValue = email;
-    btn.disabled = true; btn.textContent = 'Enviando...';
-    callAppsScript({ action: 'send', email }, function(data) {
-      btn.disabled = false; btn.textContent = 'Enviar código';
-      if (data.success) {
-        document.getElementById('step2Desc').textContent = 'Ingresa el código que enviamos a ' + email + '. Expira en 15 minutos.';
-        showStep('step2');
-        setTimeout(() => document.getElementById('resetCode').focus(), 100);
-      } else {
-        showError(errorEl, data.error || 'Error al enviar el código');
-      }
-    });
-  }
-
-  async function verifyCode() {
-    const code = document.getElementById('resetCode').value.trim();
-    const errorEl = document.getElementById('step2Error');
-    errorEl.style.display = 'none';
-    if (code.length !== 6) { showError(errorEl, 'El código debe tener 6 dígitos'); return; }
-    showStep('step3');
-    setTimeout(() => document.getElementById('newPassword').focus(), 100);
-  }
-
-  async function resetPassword() {
-    const code = document.getElementById('resetCode').value.trim();
-    const newPassword = document.getElementById('newPassword').value;
-    const confirmPassword = document.getElementById('confirmPassword').value;
-    const errorEl = document.getElementById('step3Error');
-    errorEl.style.display = 'none';
-    if (newPassword.length < 6) { showError(errorEl, 'La contraseña debe tener al menos 6 caracteres'); return; }
-    if (newPassword !== confirmPassword) { showError(errorEl, 'Las contraseñas no coinciden'); return; }
-    callAppsScript({ action: 'verify', email: resetEmailValue, code, newPassword }, function(data) {
-      if (data.success) { showStep('step4'); }
-      else {
-        showError(errorEl, data.error || 'Error al cambiar la contraseña');
-        if (data.error && (data.error.includes('Código') || data.error.includes('expirado'))) showStep('step2');
-      }
-    });
-  }
 </script>
-
 </body>
 </html>
