@@ -156,7 +156,7 @@ body {
   margin-left: var(--sidebar-w);
   flex: 1;
   padding: 2rem;
-  max-width: 1500px;
+  max-width: 1000px;
 }
 
 .section { display: none; }
@@ -199,24 +199,16 @@ body {
 /* ── Compose Grid ───────────────────────────────────────── */
 .compose-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 280px 1fr;
   gap: 1.5rem;
   align-items: start;
-  max-width: 100%;
-  width: 100%;
-}
-.upload-card {
-  width: 100%;
-}
-.text-card {
-  width: 100%;
 }
 
 /* ── Upload ─────────────────────────────────────────────── */
 .upload-area {
   border: 2px dashed var(--border);
   border-radius: 8px;
-  min-height: 416px;
+  min-height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -227,7 +219,6 @@ body {
   transition: border-color 0.2s, background 0.2s;
   position: relative;
   margin-bottom: 0.75rem;
-  overflow: hidden;
 }
 
 .upload-area:hover, .upload-area.drag-over {
@@ -241,7 +232,7 @@ body {
   pointer-events: none;
 }
 
-.upload-icon { font-size: 3.5rem; margin-bottom: 0.75rem; }
+.upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
 
 .upload-placeholder p {
   font-size: 0.85rem;

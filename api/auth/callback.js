@@ -68,14 +68,8 @@ export default async function handler(req, res) {
             }
         }
 
-        try { await db.query("INSERT INTO notificaciones (tipo, mensaje) VALUES (?,?)", ["nueva_cuenta", "Nueva cuenta conectada: " + (userData.name || "Usuario")]); } catch(e) {}
         await db.end();
-        const state = req.query.state || '';
-        if (state === 'conectar') {
-            res.redirect('https://admsocial.vercel.app/conectado.html');
-        } else {
-            res.redirect(`${frontendUrl}/dashboard?user=${encodeURIComponent(userData.name)}`);
-        }
+        res.redirect(`${frontendUrl}/dashboard?user=${encodeURIComponent(userData.name)}`);
 
     } catch (err) {
         console.error('Callback error:', err);

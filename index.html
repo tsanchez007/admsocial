@@ -4,30 +4,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>SocialApp – Gestor de Redes</title>
+  <title>SocialApp — Gestor de Redes</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-<!-- ══════════════════════════════════════════════════════════ SIDEBAR -->
+<!-- ═══════════════════════════════════════════ SIDEBAR -->
 
 <aside class="sidebar">
-  <div class="sidebar-logo" style="display:flex;align-items:center;justify-content:space-between;">
-    <div><span class="logo-icon">◈</span><span class="logo-text">SocialApp</span></div>
-    <div id="notifBtn" onclick="toggleNotif()" style="position:relative;cursor:pointer;padding:4px;">
-      <span style="font-size:1.3rem;">&#128276;</span>
-      <span id="notifBadge" style="display:none;position:absolute;top:0;right:0;background:#e74c3c;color:white;font-size:9px;font-weight:700;border-radius:99px;padding:1px 5px;min-width:16px;text-align:center;">0</span>
-    </div>
+  <div class="sidebar-logo">
+    <span class="logo-icon">◈</span>
+    <span class="logo-text">SocialApp</span>
   </div>
 
   <nav class="sidebar-nav">
     <button class="nav-item active" data-section="dashboard">
       <span class="nav-icon">✦</span>
       <span>Dashboard</span>
-    </button>
-    <button class="nav-item" data-section="imageCreator">
-      <span class="nav-icon">✨</span>
-      <span>Crear Imagen</span>
     </button>
     <button class="nav-item" data-section="scheduled">
       <span class="nav-icon">📅</span>
@@ -44,241 +37,112 @@
     </button>
     <button class="nav-item" data-section="exportSettings">
       <span class="nav-icon">⚙️</span>
-      <span>Ajustes</span>
-    </button>
-    <button class="nav-item" onclick="shareConnectLink()" style="margin-top:8px;">
-      <span class="nav-icon">🔑</span>
-      <span>Conectar</span>
+      <span>Ajustes PDF</span>
     </button>
   </nav>
 
   <div class="sidebar-bottom">
     <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙</button>
-    <button onclick="logout()" style="width:100%;padding:8px;margin-top:8px;border:1px solid #e74c3c;background:transparent;color:#e74c3c;border-radius:8px;cursor:pointer;font-size:0.85rem;font-weight:600;">🚪 Cerrar Sesión</button>
   </div>
 </aside>
 
-<!-- ══════════════════════════════════════════════════════════ MAIN -->
+<!-- ═══════════════════════════════════════════ MAIN -->
 
 <main class="main">
 
   <!-- ─── DASHBOARD ─── -->
+
   <section class="section active" id="dashboard">
     <div class="section-header">
       <h1>Nueva Publicación</h1>
       <p>Crea y programa contenido para tus redes sociales</p>
     </div>
 
-    <div class="compose-grid">
-      <!-- Upload -->
-      <div class="card upload-card">
-        <h2>Imagen / Video</h2>
-        <div id="dimensionInfo" style="font-size:0.78rem;color:var(--accent);margin-bottom:6px;min-height:18px;"></div>
-        <div class="upload-area" id="uploadArea">
-          <div id="mediaPreviewGrid" style="display:none;width:100%;flex-wrap:nowrap;gap:6px;overflow-x:hidden;"></div>
-          <div class="upload-placeholder" id="uploadPlaceholder">
-            <div class="upload-icon" id="uploadIcon">🖼</div>
-            <p id="uploadHint">Selecciona hasta 10 imagenes o videos</p>
-            <span id="uploadSpec">JPG, PNG, GIF, MP4 · Max 50MB c/u</span>
-          </div>
-        </div>
-        <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
-        <button class="btn-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
-          Seleccionar imagen o video
-        </button>
-      </div>
 
-      <!-- Texto -->
-      <div class="card text-card">
-        <h2>Texto</h2>
-        <div class="textarea-wrap">
-          <textarea id="postText" placeholder="Escribe el texto de tu publicación... #hashtag @menciones" rows="6" maxlength="2200"></textarea>
-          <div class="char-counter"><span id="charCounter">0</span> / 2200</div>
-        </div>
-
-        <div class="accounts-select-row" style="margin-bottom:16px">
-          <label style="display:block;margin-bottom:8px;font-weight:600">Cuenta</label>
-          <select id="accountSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px">
-            <option value="">Cargando cuentas...</option>
-          </select>
-        </div>
-
-        <div class="networks-row">
-          <label class="network-check instagram">
-            <input type="checkbox" id="instagramCheck">
-            <span class="network-icon">📸</span>
-            Instagram
-          </label>
-          <label class="network-check facebook">
-            <input type="checkbox" id="facebookCheck">
-            <span class="network-icon">📘</span>
-            Facebook
-          </label>
-        </div>
-
-        <!-- Selector de tipo de publicación -->
-        <div id="tipoPublicacionRow" style="display:none;margin:12px 0;">
-          <label style="display:block;margin-bottom:8px;font-weight:600;">Tipo de publicación</label>
-          <div id="tipoOpciones" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-          <div id="dimensionLabel" style="font-size:0.78rem;color:var(--accent);margin-top:6px;"></div>
-        </div>
-
-        <div class="schedule-row">
-          <label>Fecha y hora</label>
-          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
-            <input type="date" id="scheduleDate" class="date-input" style="flex:1">
-            <select id="scheduleHour" class="date-input" style="flex:0 0 80px">
-              <option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option>
-            </select>:
-            <select id="scheduleMin" class="date-input" style="flex:0 0 70px">
-              <option>00</option><option>01</option><option>02</option><option>03</option><option>04</option><option>05</option><option>06</option><option>07</option><option>08</option><option>09</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option><option>53</option><option>54</option><option>55</option><option>56</option><option>57</option><option>58</option><option>59</option>
-            </select>
-            <select id="scheduleAmPm" class="date-input" style="flex:0 0 70px">
-              <option>AM</option><option>PM</option>
-            </select>
-          </div>
-        </div>
-
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn-primary" id="scheduleBtn" onclick="schedulePost()">✦ Programar Ahora</button>
-          <button class="btn-primary" style="background:#22c55e;" onclick="schedulePost(true)">🚀 Publicar Ahora</button>
-        </div>
+<div class="compose-grid">
+  <!-- Upload -->
+  <div class="card upload-card">
+    <h2>Imagen / Video</h2>
+    <div id="dimensionInfo" style="font-size:0.78rem;color:var(--accent);margin-bottom:6px;min-height:18px;"></div>
+    <div class="upload-area" id="uploadArea">
+      <div id="mediaPreviewGrid" style="display:none;width:100%;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
+      <div class="upload-placeholder" id="uploadPlaceholder">
+        <div class="upload-icon" id="uploadIcon">🖼</div>
+        <p id="uploadHint">Selecciona hasta 10 imagenes o videos</p>
+        <span id="uploadSpec">JPG, PNG, GIF, MP4 · Max 50MB c/u</span>
       </div>
     </div>
-  </section>
+    <input type="file" id="fileInput" accept="image/*,video/*" multiple hidden>
+    <button class="btn-secondary btn-sm" onclick="document.getElementById('fileInput').click()">
+      Seleccionar imagen o video
+    </button>
+  </div>
 
-  <!-- ─── CREAR IMAGEN IA ─── -->
-  <section class="section" id="imageCreator">
-    <div class="section-header">
-      <h1>✨ Crear Imagen con IA</h1>
-      <p>Genera imágenes con Gemini AI y úsalas directamente en tus publicaciones</p>
+  <!-- Texto -->
+  <div class="card text-card">
+    <h2>Texto</h2>
+    <div class="textarea-wrap">
+      <textarea 
+        id="postText" 
+        placeholder="Escribe el texto de tu publicación... #hashtag @menciones"
+        rows="6"
+        maxlength="2200"
+      ></textarea>
+      <div class="char-counter">
+        <span id="charCounter">0</span> / 2200
+      </div>
     </div>
 
-    <div class="compose-grid">
-
-      <!-- Panel Izquierdo: Prompt -->
-      <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
-        <h2>DESCRIPCIÓN</h2>
-
-        <div class="textarea-wrap">
-          <textarea
-            id="imagePrompt"
-            rows="6"
-            placeholder="Describe la imagen que quieres generar...
-
-Ej: Una taza de café humeante sobre una mesa de madera, luz cálida de mañana, estilo fotorrealista, para redes sociales"
-            style="resize:vertical;"
-          ></textarea>
-        </div>
-
-        <!-- Chips de sugerencias rápidas -->
-        <div>
-          <p style="font-size:0.78rem;color:var(--text2);margin-bottom:8px;font-weight:600;">⚡ Sugerencias rápidas</p>
-          <div style="display:flex;flex-wrap:wrap;gap:6px;">
-            <button class="prompt-chip" onclick="setPromptChip('Post atractivo para Instagram, composición cuadrada, colores vibrantes, moderno y llamativo para redes sociales')">📱 Post Instagram</button>
-            <button class="prompt-chip" onclick="setPromptChip('Foto profesional de producto sobre fondo blanco limpio, iluminación de estudio, alta calidad, estilo e-commerce')">🛍️ Foto producto</button>
-            <button class="prompt-chip" onclick="setPromptChip('Diseño visual llamativo para promoción especial con descuento, colores alegres y energéticos, tipografía moderna, banner publicitario')">🎉 Promoción</button>
-            <button class="prompt-chip" onclick="setPromptChip('Paisaje natural inspiracional al amanecer con montañas y cielo, colores cálidos naranjas y rosas, fotografía profesional, ambiente motivacional')">🌅 Inspiracional</button>
-            <button class="prompt-chip" onclick="setPromptChip('Imagen corporativa profesional, personas en reunión de negocios, tonos azules y grises, ambiente moderno de oficina, fotografía profesional')">💼 Corporativa</button>
-            <button class="prompt-chip" onclick="setPromptChip('Fotografía gastronómica de comida deliciosa presentada elegantemente en restaurante, iluminación perfecta, apetitosa y atractiva')">🍽️ Gastronomía</button>
-            <button class="prompt-chip" onclick="setPromptChip('Imagen de fitness y ejercicio, persona activa deportiva, colores energéticos vibrantes, ambiente motivacional y dinámico')">💪 Fitness</button>
-            <button class="prompt-chip" onclick="setPromptChip('Diseño abstracto artístico con colores modernos y vibrantes, composición minimalista, fondo degradado elegante, para perfil de redes sociales')">🎨 Arte abstracto</button>
-          </div>
-        </div>
-
-        <!-- Selector de estilo -->
-        <div>
-          <label style="font-size:0.8rem;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">🎨 Estilo visual</label>
-          <select id="imageStyle" class="date-input">
-            <option value="">Sin estilo específico</option>
-            <option value="fotorrealista, alta calidad, 4K, muy detallado">📷 Fotorrealista 4K</option>
-            <option value="ilustración digital, colores vibrantes, estilo moderno">🎨 Ilustración digital</option>
-            <option value="minimalista, fondo blanco, limpio, simple, elegante">⬜ Minimalista</option>
-            <option value="estilo cinematográfico, dramático, iluminación perfecta, cinematográfico">🎬 Cinematográfico</option>
-            <option value="acuarela artística, suave, tonos pastel delicados">🖌️ Acuarela</option>
-            <option value="3D render moderno, brillante, materiales realistas, CGI">🔮 3D Render</option>
-            <option value="vintage retro, tonos cálidos sepia, estilo años 80">📻 Vintage / Retro</option>
-            <option value="flat design vectorial, colores planos, moderno y limpio">📐 Flat Design</option>
-          </select>
-        </div>
-
-        <!-- Proporción -->
-        <div>
-          <label style="font-size:0.8rem;font-weight:600;color:var(--text2);display:block;margin-bottom:6px;">📐 Proporción</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="ratio-btn active-ratio" data-ratio="cuadrada 1:1" onclick="selectRatio(this)">⬛ 1:1 Feed</button>
-            <button class="ratio-btn" data-ratio="vertical 9:16" onclick="selectRatio(this)">📱 9:16 Historia</button>
-            <button class="ratio-btn" data-ratio="horizontal 16:9" onclick="selectRatio(this)">🖥️ 16:9 Banner</button>
-            <button class="ratio-btn" data-ratio="horizontal 1.91:1" onclick="selectRatio(this)">📘 1.91:1 FB</button>
-          </div>
-        </div>
-
-        <!-- Botón generar -->
-        <button class="btn-primary" id="generateImageBtn" onclick="generateImage()">
-          ✨ Generar Imagen con IA
-        </button>
-
-        <!-- Error -->
-        <div id="generateError" style="display:none;padding:10px 14px;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;color:#ef4444;font-size:0.85rem;"></div>
-      </div>
-
-      <!-- Panel Derecho: Resultado -->
-      <div class="card" style="display:flex;flex-direction:column;gap:1rem;">
-        <h2>RESULTADO</h2>
-
-        <!-- Área de imagen -->
-        <div id="imageResultBox" style="flex:1;min-height:360px;border:2px dashed var(--border);border-radius:12px;display:flex;align-items:center;justify-content:center;overflow:hidden;background:var(--bg3);position:relative;transition:border-color 0.3s;">
-
-          <!-- Placeholder -->
-          <div id="imageResultPlaceholder" style="text-align:center;color:var(--text2);padding:2rem;">
-            <div style="font-size:3.5rem;margin-bottom:12px;">🖼️</div>
-            <p style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">La imagen aparecerá aquí</p>
-            <p style="font-size:0.78rem;opacity:0.6;">Escribe una descripción y presiona Generar</p>
-          </div>
-
-          <!-- Loading spinner -->
-          <div id="imageLoading" style="display:none;flex-direction:column;align-items:center;gap:16px;color:var(--text2);">
-            <div style="width:48px;height:48px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spinImg 0.8s linear infinite;"></div>
-            <div style="text-align:center;">
-              <p style="font-size:0.9rem;font-weight:600;margin-bottom:4px;">Generando con Gemini AI...</p>
-              <p style="font-size:0.78rem;opacity:0.6;">Esto puede tomar unos segundos</p>
-            </div>
-          </div>
-
-          <!-- Imagen generada -->
-          <img id="generatedImage" style="display:none;width:100%;height:100%;object-fit:contain;border-radius:10px;" alt="Imagen generada por IA">
-        </div>
-
-        <!-- Botones de acción -->
-        <div id="imageActions" style="display:none;flex-direction:column;gap:8px;">
-          <button
-            onclick="useGeneratedImage()"
-            style="width:100%;padding:0.8rem;background:var(--accent);color:white;border:none;border-radius:8px;font-size:0.95rem;font-weight:600;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;"
-            onmouseover="this.style.background='var(--accent2)'" onmouseout="this.style.background='var(--accent)'"
-          >
-            📤 Usar esta imagen en el Dashboard
-          </button>
-          <div style="display:flex;gap:8px;">
-            <button onclick="downloadGeneratedImage()" class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
-              ⬇️ Descargar
-            </button>
-            <button onclick="generateImage()" class="btn-secondary" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;">
-              🔄 Regenerar
-            </button>
-          </div>
-        </div>
-
-        <!-- Historial -->
-        <div id="imageHistory" style="display:none;">
-          <p style="font-size:0.78rem;color:var(--text2);font-weight:600;margin-bottom:8px;">🕓 Generadas anteriormente</p>
-          <div id="imageHistoryGrid" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
-        </div>
-      </div>
-
+    <div class="accounts-select-row" style="margin-bottom:16px"><label style="display:block;margin-bottom:8px;font-weight:600">Cuenta</label><select id="accountSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px"><option value="">Cargando cuentas...</option></select></div><div class="networks-row">
+      <label class="network-check instagram">
+        <input type="checkbox" id="instagramCheck">
+        <span class="network-icon">📸</span>
+        Instagram
+      </label>
+      <label class="network-check facebook">
+        <input type="checkbox" id="facebookCheck">
+        <span class="network-icon">📘</span>
+        Facebook
+      </label>
     </div>
+
+    <!-- Selector de tipo de publicación -->
+    <div id="tipoPublicacionRow" style="display:none;margin:12px 0;">
+      <label style="display:block;margin-bottom:8px;font-weight:600;">Tipo de publicación</label>
+      <div id="tipoOpciones" style="display:flex;gap:8px;flex-wrap:wrap;"></div>
+      <div id="dimensionLabel" style="font-size:0.78rem;color:var(--accent);margin-top:6px;"></div>
+    </div>
+
+    <div class="schedule-row">
+      <label>Fecha y hora</label>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+  <input type="date" id="scheduleDate" class="date-input" style="flex:1">
+  <select id="scheduleHour" class="date-input" style="flex:0 0 80px">
+    <option>12</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option><option>10</option><option>11</option>
+  </select>:
+  <select id="scheduleMin" class="date-input" style="flex:0 0 70px"><option>00</option><option>01</option><option>02</option><option>03</option><option>04</option><option>05</option><option>06</option><option>07</option><option>08</option><option>09</option><option>10</option><option>11</option><option>12</option><option>13</option><option>14</option><option>15</option><option>16</option><option>17</option><option>18</option><option>19</option><option>20</option><option>21</option><option>22</option><option>23</option><option>24</option><option>25</option><option>26</option><option>27</option><option>28</option><option>29</option><option>30</option><option>31</option><option>32</option><option>33</option><option>34</option><option>35</option><option>36</option><option>37</option><option>38</option><option>39</option><option>40</option><option>41</option><option>42</option><option>43</option><option>44</option><option>45</option><option>46</option><option>47</option><option>48</option><option>49</option><option>50</option><option>51</option><option>52</option><option>53</option><option>54</option><option>55</option><option>56</option><option>57</option><option>58</option><option>59</option></select>
+  <select id="scheduleAmPm" class="date-input" style="flex:0 0 70px">
+    <option>AM</option><option>PM</option>
+  </select>
+</div>
+    </div>
+
+    <div style="display:flex;gap:10px;flex-wrap:wrap;">
+      <button class="btn-primary" id="scheduleBtn" onclick="schedulePost()">
+        ✦ Programar Ahora
+      </button>
+      <button class="btn-primary" style="background:#22c55e;" onclick="schedulePost(true)">
+        🚀 Publicar Ahora
+      </button>
+    </div>
+  </div>
+</div>
+
+
   </section>
 
   <!-- ─── PROGRAMADOS ─── -->
+
   <section class="section" id="scheduled">
     <div class="section-header">
       <h1>Publicaciones Programadas</h1>
@@ -303,191 +167,136 @@ Ej: Una taza de café humeante sobre una mesa de madera, luz cálida de mañana,
   </section>
 
   <!-- ─── ESTADÍSTICAS ─── -->
+
   <section class="section" id="stats">
     <div class="section-header">
       <h1>Estadísticas</h1>
       <p>Resumen de tu actividad en la plataforma</p>
     </div>
-    <div class="stats-grid">
-      <div class="stat-card"><div class="stat-number" id="statTotal">0</div><div class="stat-label">Total Posts</div></div>
-      <div class="stat-card"><div class="stat-number" id="statPending">0</div><div class="stat-label">Pendientes</div></div>
-      <div class="stat-card"><div class="stat-number" id="statPublished">0</div><div class="stat-label">Publicados</div></div>
-      <div class="stat-card"><div class="stat-number" id="statIG">0</div><div class="stat-label">En Instagram</div></div>
-      <div class="stat-card"><div class="stat-number" id="statFB">0</div><div class="stat-label">En Facebook</div></div>
-      <div class="stat-card"><div class="stat-number" id="statAccounts">0</div><div class="stat-label">Cuentas</div></div>
-    </div>
+
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-number" id="statTotal">0</div>
+    <div class="stat-label">Total Posts</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statPending">0</div>
+    <div class="stat-label">Pendientes</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statPublished">0</div>
+    <div class="stat-label">Publicados</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statIG">0</div>
+    <div class="stat-label">En Instagram</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statFB">0</div>
+    <div class="stat-label">En Facebook</div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-number" id="statAccounts">0</div>
+    <div class="stat-label">Cuentas</div>
+  </div>
+</div>
+
+
   </section>
 
   <!-- ─── CUENTAS ─── -->
+
   <section class="section" id="accounts">
     <div class="section-header">
       <h1>Cuentas Conectadas</h1>
       <p>Administra tus perfiles de Instagram y Facebook</p>
     </div>
-    <div class="accounts-actions">
-      <button class="btn-primary btn-connect" onclick="connectFacebook()"><span>🔗</span> Conectar con Facebook / Instagram</button>
-      <button class="btn-secondary" onclick="loadAccounts()">↻ Actualizar</button>
-      <button class="btn-secondary" style="border-color:#e74c3c;color:#e74c3c;" onclick="disconnectAll()">✕ Desconectar Todo</button>
-    </div>
-    <div class="info-banner">
-      <span class="info-icon">ℹ️</span>
-      <div>
-        <strong>¿Cómo funciona?</strong>
-        Al hacer clic en "Conectar", se abrirá el login oficial de Facebook.
-        Puedes seleccionar tus páginas e Instagram Business para administrarlos desde SocialApp.
-      </div>
-    </div>
-    <div id="accountsList" class="accounts-list">
-      <div class="loading">Cargando cuentas...</div>
-    </div>
+
+
+<div class="accounts-actions">
+  <button class="btn-primary btn-connect" onclick="connectFacebook()">
+    <span>🔗</span>
+    Conectar con Facebook / Instagram
+  </button>
+  <button class="btn-secondary" onclick="loadAccounts()">
+    ↻ Actualizar
+  </button>
+  <button class="btn-secondary" style="border-color:#e74c3c;color:#e74c3c;" onclick="disconnectAll()">
+    ✕ Desconectar Todo
+  </button>
+</div>
+
+<div class="info-banner">
+  <span class="info-icon">ℹ️</span>
+  <div>
+    <strong>¿Cómo funciona?</strong>
+    Al hacer clic en "Conectar", se abrirá el login oficial de Facebook. 
+    Puedes seleccionar tus páginas e Instagram Business para administrarlos desde SocialApp.
+  </div>
+</div>
+
+<div id="accountsList" class="accounts-list">
+  <div class="loading">Cargando cuentas...</div>
+</div>
+
+
   </section>
 
-  <!-- ─── AJUSTES ─── -->
+
+  <!-- ─── AJUSTES PDF ─── -->
   <section class="section" id="exportSettings">
     <div class="section-header">
-      <h1>Ajustes</h1>
-      <p>Configuración del sistema</p>
-    </div>
-    <div style="display:flex;gap:8px;margin-bottom:24px;border-bottom:2px solid #eee;padding-bottom:0;">
-      <button onclick="showTab('tabPDF')" id="btnTabPDF" style="padding:10px 20px;border:none;background:none;border-bottom:3px solid #6c63ff;color:#6c63ff;font-weight:600;cursor:pointer;font-size:0.95rem;">📄 Ajustes PDF</button>
-      <button onclick="showTab('tabAdmin')" id="btnTabAdmin" style="padding:10px 20px;border:none;background:none;border-bottom:3px solid transparent;color:#999;font-weight:600;cursor:pointer;font-size:0.95rem;">⚙️ Ajustes Administrativos</button>
-    </div>
-    <div id="tabPDF">
-      <div class="settings-card">
-        <h2 class="settings-title">🖼 Portada</h2>
-        <p class="settings-desc">Imagen tipo banner (820×312px, proporción Facebook)</p>
-        <div id="coverPreviewWrap" style="width:100%;max-width:820px;height:180px;border-radius:12px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:2px dashed var(--border);cursor:pointer;" onclick="document.getElementById('coverInput').click()">
-          <img id="coverPreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
-          <span id="coverPlaceholder" style="color:var(--text2);font-size:0.9rem;">📷 Clic para subir imagen de portada</span>
-        </div>
-        <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="previewCover(this)">
-        <button onclick="document.getElementById('coverInput').click()" class="btn-secondary" style="margin-right:8px;">Subir imagen</button>
-        <button onclick="clearCover()" class="btn-secondary">Quitar portada</button>
-      </div>
-      <div class="settings-card">
-        <h2 class="settings-title">📝 Título del reporte</h2>
-        <input type="text" id="pdfTitle" placeholder="Ej: Programación de Redes Sociales" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
-      </div>
-      <div class="settings-card">
-        <h2 class="settings-title">📄 Pie de página</h2>
-        <input type="text" id="pdfFooter" placeholder="Ej: © 2025 Mi Empresa – Confidencial" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
-      </div>
-      <div class="settings-card">
-        <h2 class="settings-title">✅ Campos a mostrar en cada post</h2>
-        <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
-          <label class="settings-toggle"><input type="checkbox" id="showImage" checked> Imagen / Video</label>
-          <label class="settings-toggle"><input type="checkbox" id="showCuenta" checked> Nombre de cuenta</label>
-          <label class="settings-toggle"><input type="checkbox" id="showFecha" checked> Fecha y hora</label>
-          <label class="settings-toggle"><input type="checkbox" id="showPlataformas" checked> Plataformas (Instagram / Facebook)</label>
-          <label class="settings-toggle"><input type="checkbox" id="showTexto" checked> Texto del post</label>
-        </div>
-      </div>
-      <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;">💾 Guardar ajustes</button>
+      <h1>Ajustes de Exportación PDF</h1>
+      <p>Personaliza cómo se verá tu reporte impreso</p>
     </div>
 
-    <div id="tabAdmin" style="display:none;">
-      <div class="settings-card">
-        <h2 class="settings-title">🖼 Logos</h2>
-        <p class="settings-desc">Configura los logos de la plataforma</p>
-        <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px;margin-bottom:16px;">
-          <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Logo del Login</label>
-            <div id="logoLoginPreview" onclick="document.getElementById('logoLoginInput').click()" style="width:100%;height:60px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9;overflow:hidden;">
-              <span style="color:#999;font-size:0.85rem;">Click para subir</span>
-            </div>
-            <input type="file" id="logoLoginInput" accept="image/*" style="display:none;" onchange="previewLogo('logoLoginInput','logoLoginPreview','logoLogin')">
-          </div>
-          <div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Logo del Menú</label>
-            <div id="logoMenuPreview" onclick="document.getElementById('logoMenuInput').click()" style="width:100%;height:60px;border:2px dashed #ddd;border-radius:10px;display:flex;align-items:center;justify-content:center;cursor:pointer;background:#f9f9f9;overflow:hidden;">
-              <span style="color:#999;font-size:0.85rem;">Click para subir</span>
-            </div>
-            <input type="file" id="logoMenuInput" accept="image/*" style="display:none;" onchange="previewLogo('logoMenuInput','logoMenuPreview','logoMenu')">
-          </div>
-        </div>
-        <button onclick="saveLogos()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Guardar Logos</button>
+    <div class="settings-card">
+      <h2 class="settings-title">🖼 Portada</h2>
+      <p class="settings-desc">Imagen tipo banner (820×312px, proporción Facebook)</p>
+      <div id="coverPreviewWrap" style="width:100%;max-width:820px;height:180px;border-radius:12px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:2px dashed var(--border);cursor:pointer;" onclick="document.getElementById('coverInput').click()">
+        <img id="coverPreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
+        <span id="coverPlaceholder" style="color:var(--text2);font-size:0.9rem;">📷 Clic para subir imagen de portada</span>
       </div>
+      <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="previewCover(this)">
+      <button onclick="document.getElementById('coverInput').click()" class="btn-secondary" style="margin-right:8px;">Subir imagen</button>
+      <button onclick="clearCover()" class="btn-secondary">Quitar portada</button>
+    </div>
 
-      <div class="settings-card">
-        <h2 class="settings-title">🏢 Información de la Empresa</h2>
-        <p class="settings-desc">Configura el nombre que aparece en el login</p>
-        <div style="margin-bottom:16px;">
-          <label style="font-weight:600;display:block;margin-bottom:6px;">Nombre de la empresa</label>
-          <input type="text" id="adminNombre" placeholder="Social ADM Group" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.95rem;">
-        </div>
-        <button onclick="saveAdminSettings()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Guardar</button>
-      </div>
+    <div class="settings-card">
+      <h2 class="settings-title">📝 Título del reporte</h2>
+      <input type="text" id="pdfTitle" placeholder="Ej: Programación de Redes Sociales" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
+    </div>
 
-      <div class="settings-card">
-        <h2 class="settings-title">👥 Gestión de Usuarios</h2>
-        <p class="settings-desc">Crea y administra usuarios asistentes</p>
-        <button onclick="toggleUserForm()" id="btnNuevoUsuario" style="padding:10px 20px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-bottom:16px;">+ Nuevo Usuario</button>
-        <div id="userForm" style="display:none;background:#f9f9ff;border:1px solid #e0deff;border-radius:12px;padding:24px;margin-bottom:20px;">
-          <h3 style="margin-bottom:16px;color:#6c63ff;">Nuevo Usuario</h3>
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
-            <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Nombre completo</label><input type="text" id="newNombre" placeholder="Ej: María González" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;"></div>
-            <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Usuario</label><input type="text" id="newUsername" placeholder="Ej: mgonzalez" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;"></div>
-            <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Correo (recuperación)</label><input type="email" id="newEmail" placeholder="correo@ejemplo.com" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;"></div>
-            <div><label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:4px;">Contraseña</label><input type="password" id="newPassword" placeholder="Contraseña segura" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;"></div>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Tipo de usuario</label>
-            <select id="newRol" style="width:100%;padding:10px;border:1px solid #ddd;border-radius:8px;font-size:0.9rem;">
-              <option value="asistente">Asistente</option>
-              <option value="admin">Administrador</option>
-            </select>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">📝 Publicaciones</label>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="crear_publicacion" checked> Crear publicaciones</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="publicar_ahora" checked> Publicar ahora</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="programar" checked> Programar posts</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_programados" checked> Ver programados</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="eliminar_publicacion"> Eliminar publicaciones</label>
-            </div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">📊 Visualización</label>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_dashboard" checked> Ver dashboard</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_estadisticas"> Ver estadísticas</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="exportar_pdf"> Exportar PDF</label>
-            </div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">👤 Cuentas</label>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ver_cuentas"> Ver cuentas</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="conectar_cuentas"> Conectar/desconectar cuentas</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="enviar_link"> Enviar link de conexión</label>
-            </div>
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">⚙️ Sistema</label>
-            <div style="display:flex;flex-wrap:wrap;gap:8px;">
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ajustes_pdf"> Ajustes PDF</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="ajustes_admin"> Ajustes administrativos</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="gestionar_usuarios"> Gestión de usuarios</label>
-              <label style="display:flex;align-items:center;gap:6px;padding:8px 12px;border:1px solid #ddd;border-radius:8px;cursor:pointer;font-size:0.85rem;"><input type="checkbox" name="perm" value="cambiar_logo"> Cambiar logo y nombre</label>
-            </div>
-          </div>
-          <div style="margin-bottom:16px;">
-            <label style="font-size:0.85rem;font-weight:600;display:block;margin-bottom:8px;">Cuentas asignadas</label>
-            <div id="cuentasCheckList" style="display:flex;flex-wrap:wrap;gap:8px;">
-              <p style="color:#999;font-size:0.85rem;">Cargando cuentas...</p>
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;">
-            <button onclick="createUser()" style="padding:10px 24px;background:#6c63ff;color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;">Crear Usuario</button>
-            <button onclick="toggleUserForm()" style="padding:10px 24px;background:transparent;color:#999;border:1px solid #ddd;border-radius:8px;cursor:pointer;">Cancelar</button>
-          </div>
-        </div>
-        <div id="usersList"></div>
+    <div class="settings-card">
+      <h2 class="settings-title">📄 Pie de página</h2>
+      <input type="text" id="pdfFooter" placeholder="Ej: © 2025 Mi Empresa — Confidencial" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
+    </div>
+
+    <div class="settings-card">
+      <h2 class="settings-title">✅ Campos a mostrar en cada post</h2>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
+        <label class="settings-toggle"><input type="checkbox" id="showImage" checked> Imagen / Video</label>
+        <label class="settings-toggle"><input type="checkbox" id="showCuenta" checked> Nombre de cuenta</label>
+        <label class="settings-toggle"><input type="checkbox" id="showFecha" checked> Fecha y hora</label>
+        <label class="settings-toggle"><input type="checkbox" id="showPlataformas" checked> Plataformas (Instagram / Facebook)</label>
+        <label class="settings-toggle"><input type="checkbox" id="showTexto" checked> Texto del post</label>
       </div>
     </div>
+
+    <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;">💾 Guardar ajustes</button>
   </section>
 
 </main>
 
 <!-- Toast container -->
+
 <div id="toastContainer"></div>
 
-<script src="script.js?v=3"></script>
+<script src="script.js?v=2"></script>
 
 </body>
 </html>
+Sun Mar 15 13:40:58 AST 2026
+Sun Mar 15 13:42:38 AST 2026
+Sun Mar 15 13:42:47 AST 2026

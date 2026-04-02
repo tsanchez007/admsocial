@@ -112,105 +112,43 @@ async function publishToFacebook(post, cuenta) {
     if (d.error) throw new Error(d.error.message);
 }
 
-async function publishStoryInstagram(post, cuenta) {
-    const apiVersion = process.env.META_API_VERSION || 'v18.0';
-    const token = cuenta.token;
-    const igId = cuenta.ig_account_id;
-    if (!igId || !post.imagen_url) return;
-
-    let media = post.imagen_url;
-    if (media && media.startsWith('[')) {
-        try { media = JSON.parse(media)[0]; } catch(e) {}
-    }
-
-    const isVid = isVideoUrl(media);
-    const body = isVid
-        ? { video_url: media, media_type: 'STORIES', access_token: token }
-        : { image_url: media, media_type: 'STORIES', access_token: token };
-
-    const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body)
-    });
-    const mediaData = await mediaRes.json();
-    if (!mediaData.id) throw new Error('Error historia IG: ' + JSON.stringify(mediaData));
-
-    if (isVid) {
-        for (let i = 0; i < 12; i++) {
-            await new Promise(r => setTimeout(r, 5000));
-            const sr = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
-            const sd = await sr.json();
-            if (sd.status_code === 'FINISHED') break;
-            if (sd.status_code === 'ERROR') throw new Error('Error procesando video historia');
-        }
-    } else {
-        await new Promise(r => setTimeout(r, 3000));
-    }
-
-    const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
-    });
-    const pubData = await pubRes.json();
-    if (pubData.error) throw new Error(pubData.error.message);
-}
-
 async function publishToInstagram(post, cuenta) {
-    const tipo = post.tipo_publicacion || 'ig_feed';
-    if (tipo === 'ig_historia') return await publishStoryInstagram(post, cuenta);
+    // Fix: imagen_url puede ser un array JSON string
+    if (post.imagen_url && post.imagen_url.startsWith('[')) {
+        try { post.imagen_url = JSON.parse(post.imagen_url)[0]; } catch(e) {}
+    }
+    // Fix: imagen_url puede ser un array JSON string
+    if (post.imagen_url && post.imagen_url.startsWith('[')) {
+        try { post.imagen_url = JSON.parse(post.imagen_url)[0]; } catch(e) {}
+    }
     const apiVersion = process.env.META_API_VERSION || 'v18.0';
     const token = cuenta.token;
     const igId = cuenta.ig_account_id;
     if (!igId || !post.imagen_url) return;
+    const media = post.imagen_url;
+    let mediaUrl = null;
 
-    let mediaList = [];
-    try {
-        const parsed = JSON.parse(post.imagen_url);
-        mediaList = Array.isArray(parsed) ? parsed : [parsed];
-    } catch(e) {
-        mediaList = [post.imagen_url];
-    }
-    mediaList = mediaList.filter(Boolean);
-    if (!mediaList.length) return;
-
-    if (mediaList.length === 1) {
-        const mediaUrl = mediaList[0];
-        if (isVideoUrl(mediaUrl)) {
-            const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ video_url: mediaUrl, media_type: 'REELS', caption: post.contenido || '', access_token: token })
-            });
-            const mediaData = await mediaRes.json();
-            if (!mediaData.id) throw new Error('Error video: ' + JSON.stringify(mediaData));
-            let status = 'IN_PROGRESS';
-            for (let i = 0; i < 12; i++) {
-                await new Promise(r => setTimeout(r, 5000));
-                const sr = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
-                const sd = await sr.json();
-                status = sd.status_code;
-                if (status === 'FINISHED') break;
-                if (status === 'ERROR') throw new Error('Error procesando video IG');
-            }
-            const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
-            });
-            const pubData = await pubRes.json();
-            if (pubData.error) throw new Error(pubData.error.message);
-            return;
-        }
-        let imgUrl = mediaUrl;
-        if (isBase64Image(mediaUrl)) imgUrl = await uploadBase64ToImgbb(mediaUrl);
-        if (!imgUrl) return;
+    if (isVideoUrl(media)) {
+        mediaUrl = media;
         const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ image_url: imgUrl, caption: post.contenido || '', access_token: token })
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ video_url: mediaUrl, media_type: 'REELS', caption: post.contenido || '', access_token: token })
         });
         const mediaData = await mediaRes.json();
-        if (!mediaData.id) throw new Error('Error imagen: ' + JSON.stringify(mediaData));
-        await new Promise(r => setTimeout(r, 5000));
+        if (!mediaData.id) throw new Error('No se pudo crear el contenedor de video en Instagram');
+        let status = 'IN_PROGRESS';
+        for (let i = 0; i < 12; i++) {
+            await new Promise(r => setTimeout(r, 5000));
+            const statusRes = await fetch(`https://graph.facebook.com/${apiVersion}/${mediaData.id}?fields=status_code&access_token=${token}`);
+            const statusData = await statusRes.json();
+            status = statusData.status_code;
+            if (status === 'FINISHED') break;
+            if (status === 'ERROR') throw new Error('Error procesando video');
+        }
         const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
         });
         const pubData = await pubRes.json();
@@ -218,45 +156,26 @@ async function publishToInstagram(post, cuenta) {
         return;
     }
 
-    // CARRUSEL
-    const childIds = [];
-    for (const mediaUrl of mediaList) {
-        let url = mediaUrl;
-        if (isBase64Image(url)) url = await uploadBase64ToImgbb(url);
-        if (!url) continue;
-        const isVid = isVideoUrl(url);
-        const body = isVid
-            ? { video_url: url, media_type: 'VIDEO', is_carousel_item: true, access_token: token }
-            : { image_url: url, is_carousel_item: true, access_token: token };
-        const res = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
-            method: 'POST', headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body)
-        });
-        const data = await res.json();
-        if (!data.id) throw new Error('Error item carrusel: ' + JSON.stringify(data));
-        if (isVid) {
-            for (let i = 0; i < 12; i++) {
-                await new Promise(r => setTimeout(r, 5000));
-                const sr = await fetch(`https://graph.facebook.com/${apiVersion}/${data.id}?fields=status_code&access_token=${token}`);
-                const sd = await sr.json();
-                if (sd.status_code === 'FINISHED') break;
-            }
-        } else {
-            await new Promise(r => setTimeout(r, 2000));
-        }
-        childIds.push(data.id);
+    if (isBase64Image(media)) {
+        mediaUrl = await uploadBase64ToImgbb(media);
+    } else if (media.startsWith('http')) {
+        mediaUrl = media;
     }
+    if (!mediaUrl) return;
 
-    const carouselRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ media_type: 'CAROUSEL', caption: post.contenido || '', children: childIds.join(','), access_token: token })
+    const mediaRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ image_url: mediaUrl, caption: post.contenido || '', access_token: token })
     });
-    const carouselData = await carouselRes.json();
-    if (!carouselData.id) throw new Error('Error carrusel: ' + JSON.stringify(carouselData));
-    await new Promise(r => setTimeout(r, 3000));
+    const mediaData = await mediaRes.json();
+    if (!mediaData.id) throw new Error("Error IG: " + JSON.stringify(mediaData));
+    // Esperar que Instagram procese la imagen
+    await new Promise(r => setTimeout(r, 5000));
     const pubRes = await fetch(`https://graph.facebook.com/${apiVersion}/${igId}/media_publish`, {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ creation_id: carouselData.id, access_token: token })
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ creation_id: mediaData.id, access_token: token })
     });
     const pubData = await pubRes.json();
     if (pubData.error) throw new Error(pubData.error.message);
