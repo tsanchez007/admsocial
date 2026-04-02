@@ -17,7 +17,8 @@ export default async function handler(req, res) {
 
     const db = await mysql.createConnection(dbConfig);
     try {
-        if (req.method === 'POST' && req.url.includes('login')) {
+        // LOGIN — detectado por _action o por url
+        if (req.method === 'POST' && (req.body?._action === 'login' || req.url?.includes('login'))) {
             const { username, password } = req.body;
             const hash = hashPassword(password);
             const [rows] = await db.query('SELECT * FROM usuarios WHERE username = ? AND password_hash = ? AND activo = 1', [username, hash]);
@@ -34,7 +35,7 @@ export default async function handler(req, res) {
         }
 
         if (req.method === 'POST') {
-            const { username, password, nombre, rol, email, permisos, cuentas } = req.body;
+            const { username, password, nombre, rol, email, permisos } = req.body;
             const hash = hashPassword(password);
             const [existing] = await db.query('SELECT id FROM usuarios WHERE username = ?', [username]);
             if (existing.length) { await db.end(); return res.status(400).json({ error: 'El usuario ya existe' }); }

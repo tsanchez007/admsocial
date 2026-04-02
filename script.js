@@ -1,8 +1,6 @@
 let carouselFiles = [];
 
 document.addEventListener('DOMContentLoaded', () => {
-    const user = sessionStorage.getItem('user');
-    if (!user) { window.location.href = '/login'; return; }
 
     console.log("Script cargado y listo ✅");
 
