@@ -12,11 +12,10 @@ export default async function handler(req, res) {
   const apiKey = process.env.GEMINI_API_KEY;
   if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY no configurada' });
 
-  // Intentar con varios modelos en orden
   const models = [
-    'gemini-2.0-flash-preview-image-generation',
-    'gemini-2.0-flash-exp-image-generation',
-    'imagen-3.0-generate-002'
+    'gemini-2.5-flash-image',
+    'gemini-3.1-flash-image-preview',
+    'gemini-2.0-flash-preview-image-generation'
   ];
 
   for (const model of models) {
@@ -34,7 +33,10 @@ export default async function handler(req, res) {
       );
 
       const data = await response.json();
-      if (!response.ok) continue;
+      if (!response.ok) {
+        console.error(`[${model}] Error:`, data.error?.message);
+        continue;
+      }
 
       const parts = data.candidates?.[0]?.content?.parts || [];
       const imagePart = parts.find(p => p.inlineData?.data);
@@ -47,6 +49,7 @@ export default async function handler(req, res) {
       });
 
     } catch (err) {
+      console.error(`[${model}] Exception:`, err.message);
       continue;
     }
   }
