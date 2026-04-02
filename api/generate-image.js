@@ -10,44 +10,46 @@ export default async function handler(req, res) {
   if (!prompt || !prompt.trim()) return res.status(400).json({ error: 'El prompt es requerido' });
 
   const apiKey = process.env.GEMINI_API_KEY;
-  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY no configurada en las variables de entorno de Vercel' });
+  if (!apiKey) return res.status(500).json({ error: 'GEMINI_API_KEY no configurada' });
 
-  try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-exp-image-generation:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: prompt.trim() }] }],
-          generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
-        })
-      }
-    );
+  // Intentar con varios modelos en orden
+  const models = [
+    'gemini-2.0-flash-preview-image-generation',
+    'gemini-2.0-flash-exp-image-generation',
+    'imagen-3.0-generate-002'
+  ];
 
-    const data = await response.json();
+  for (const model of models) {
+    try {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt.trim() }] }],
+            generationConfig: { responseModalities: ['TEXT', 'IMAGE'] }
+          })
+        }
+      );
 
-    if (!response.ok) {
-      console.error('[Gemini] Error:', JSON.stringify(data));
-      return res.status(500).json({ error: data.error?.message || 'Error de la API de Gemini' });
+      const data = await response.json();
+      if (!response.ok) continue;
+
+      const parts = data.candidates?.[0]?.content?.parts || [];
+      const imagePart = parts.find(p => p.inlineData?.data);
+      if (!imagePart) continue;
+
+      return res.json({
+        success: true,
+        imageBase64: imagePart.inlineData.data,
+        mimeType: imagePart.inlineData.mimeType || 'image/png'
+      });
+
+    } catch (err) {
+      continue;
     }
-
-    const parts = data.candidates?.[0]?.content?.parts || [];
-    const imagePart = parts.find(p => p.inlineData?.data);
-
-    if (!imagePart) {
-      console.error('[Gemini] Sin imagen:', JSON.stringify(data).slice(0, 300));
-      return res.status(500).json({ error: 'Gemini no devolvió una imagen. Intenta con otro prompt.' });
-    }
-
-    return res.json({
-      success: true,
-      imageBase64: imagePart.inlineData.data,
-      mimeType: imagePart.inlineData.mimeType || 'image/png'
-    });
-
-  } catch (err) {
-    console.error('[generate-image] Error:', err);
-    return res.status(500).json({ error: err.message });
   }
+
+  return res.status(500).json({ error: 'No se pudo generar la imagen. Intenta con otro prompt.' });
 }
