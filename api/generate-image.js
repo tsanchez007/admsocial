@@ -14,12 +14,13 @@ export default async function handler(req, res) {
 
   const models = [
     'gemini-2.5-flash-image',
-    'gemini-3.1-flash-image-preview',
-    'gemini-2.0-flash-preview-image-generation'
+    'gemini-2.5-flash-preview-04-17',
+    'gemini-2.0-flash',
   ];
 
   for (const model of models) {
     try {
+      console.log(`[generate-image] Trying model: ${model}`);
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`,
         {
@@ -33,14 +34,16 @@ export default async function handler(req, res) {
       );
 
       const data = await response.json();
-      if (!response.ok) {
-        console.error(`[${model}] Error:`, data.error?.message);
-        continue;
-      }
+      console.log(`[${model}] Status: ${response.status}, Error: ${data.error?.message || 'none'}`);
+
+      if (!response.ok) continue;
 
       const parts = data.candidates?.[0]?.content?.parts || [];
       const imagePart = parts.find(p => p.inlineData?.data);
-      if (!imagePart) continue;
+      if (!imagePart) {
+        console.log(`[${model}] No image in response`);
+        continue;
+      }
 
       return res.json({
         success: true,
@@ -49,10 +52,10 @@ export default async function handler(req, res) {
       });
 
     } catch (err) {
-      console.error(`[${model}] Exception:`, err.message);
+      console.error(`[${model}] Exception: ${err.message}`);
       continue;
     }
   }
 
-  return res.status(500).json({ error: 'No se pudo generar la imagen. Intenta con otro prompt.' });
+  return res.status(500).json({ error: 'No se pudo generar la imagen. Verifica la API key o intenta más tarde.' });
 }
