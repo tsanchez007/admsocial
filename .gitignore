@@ -1,3 +1,11 @@
 node_modules
 .vercel
 .env*.local
+node_modules/ 
+backend/node_modules/ 
+backend/routes/smmt/backend/node_modules/ 
+backend/socialapp.db 
+backend/routes/smmt/backend/socialapp.db 
+backend/uploads/ 
+backend/routes/smmt/backend/uploads/ 
+*.db 
