@@ -1,4 +1,4 @@
-// ============================================================
+﻿// ============================================================
 // Utilidades de fecha/hora — zona horaria fija: América/Santo_Domingo (UTC-4, sin horario de verano)
 // CONVENCIÓN: fecha_programada viaja y se guarda SIEMPRE en UTC real.
 // Estas funciones son el único lugar donde se convierte entre la hora que
@@ -540,6 +540,10 @@ async function loadStats() {
 
 async function connectFacebook() {
     window.location.href = '/api/auth/login';
+}
+
+async function connectInstagramOnly() {
+    window.location.href = '/api/auth/login-instagram';
 }
 
 async function loadAccountsSelect() {

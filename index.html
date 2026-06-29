@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 
 <html lang="es">
 <head>
@@ -13,36 +13,36 @@
 
 <aside class="sidebar">
   <div class="sidebar-logo">
-    <span class="logo-icon">◈</span>
+    <span class="logo-icon" data-icon="logo"></span>
     <span class="logo-text">SocialApp</span>
   </div>
 
   <nav class="sidebar-nav">
     <button class="nav-item active" data-section="dashboard">
-      <span class="nav-icon">✦</span>
+      <span class="nav-icon" data-icon="compose"></span>
       <span>Dashboard</span>
     </button>
     <button class="nav-item" data-section="scheduled">
-      <span class="nav-icon">📅</span>
+      <span class="nav-icon" data-icon="calendar"></span>
       <span>Programados</span>
       <span class="badge" id="scheduledBadge" style="display:none">0</span>
     </button>
     <button class="nav-item" data-section="stats">
-      <span class="nav-icon">📊</span>
+      <span class="nav-icon" data-icon="chart"></span>
       <span>Estadísticas</span>
     </button>
     <button class="nav-item" data-section="accounts">
-      <span class="nav-icon">🔗</span>
+      <span class="nav-icon" data-icon="link"></span>
       <span>Cuentas</span>
     </button>
     <button class="nav-item" data-section="exportSettings">
-      <span class="nav-icon">⚙️</span>
+      <span class="nav-icon" data-icon="sliders"></span>
       <span>Ajustes PDF</span>
     </button>
   </nav>
 
   <div class="sidebar-bottom">
-    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()">🌙</button>
+    <button class="theme-btn" id="themeToggle" onclick="toggleTheme()"data-icon="sun"></button>
   </div>
 </aside>
 
@@ -67,7 +67,7 @@
     <div class="upload-area" id="uploadArea">
       <div id="mediaPreviewGrid" style="display:none;width:100%;flex-wrap:wrap;gap:6px;justify-content:center;"></div>
       <div class="upload-placeholder" id="uploadPlaceholder">
-        <div class="upload-icon" id="uploadIcon">🖼</div>
+        <div class="upload-icon" id="uploadIcon" data-icon="image"></div>
         <p id="uploadHint">Selecciona hasta 10 imagenes o videos</p>
         <span id="uploadSpec">JPG, PNG, GIF, MP4 · Max 50MB c/u</span>
       </div>
@@ -96,12 +96,12 @@
     <div class="accounts-select-row" style="margin-bottom:16px"><label style="display:block;margin-bottom:8px;font-weight:600">Cuenta</label><select id="accountSelect" style="width:100%;padding:10px;border-radius:8px;border:1px solid #ddd;font-size:14px"><option value="">Cargando cuentas...</option></select></div><div class="networks-row">
       <label class="network-check instagram">
         <input type="checkbox" id="instagramCheck">
-        <span class="network-icon">📸</span>
+        <span class="network-icon" data-icon="camera"></span>
         Instagram
       </label>
       <label class="network-check facebook">
         <input type="checkbox" id="facebookCheck">
-        <span class="network-icon">📘</span>
+        <span class="network-icon" data-icon="users"></span>
         Facebook
       </label>
     </div>
@@ -129,10 +129,10 @@
 
     <div style="display:flex;gap:10px;flex-wrap:wrap;">
       <button class="btn-primary" id="scheduleBtn" onclick="schedulePost()">
-        ✦ Programar Ahora
+        <span data-icon="calendarPlus"></span> Programar Ahora
       </button>
       <button class="btn-primary" style="background:#22c55e;" onclick="schedulePost(true)">
-        🚀 Publicar Ahora
+        <span data-icon="zap"></span> Publicar Ahora
       </button>
     </div>
   </div>
@@ -157,9 +157,9 @@
         <label style="display:block;font-size:0.8rem;color:var(--text2);margin-bottom:4px;">Hasta</label>
         <input type="date" id="filterTo" class="date-input" style="width:160px;">
       </div>
-      <button onclick="applyFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;">🔍 Filtrar</button>
-      <button onclick="clearFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;">✕ Limpiar</button>
-      <button onclick="exportPDF()" style="padding:0.65rem 1.2rem;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-left:auto;">📄 Exportar PDF</button>
+      <button onclick="applyFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;"><span data-icon="search"></span> Filtrar</button>
+      <button onclick="clearFilter()" class="btn-secondary" style="padding:0.65rem 1.2rem;"><span data-icon="x"></span> Limpiar</button>
+      <button onclick="exportPDF()" style="padding:0.65rem 1.2rem;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer;font-weight:600;margin-left:auto;"><span data-icon="fileText"></span> Exportar PDF</button>
     </div>
     <div class="posts-list" id="postsList">
       <div class="loading">Cargando...</div>
@@ -216,19 +216,23 @@
 
 <div class="accounts-actions">
   <button class="btn-primary btn-connect" onclick="connectFacebook()">
-    <span>🔗</span>
+    <span data-icon="link"></span>
     Conectar con Facebook / Instagram
   </button>
+  <button class="btn-primary btn-connect" style="background:linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045);" onclick="connectInstagramOnly()">
+    <span data-icon="camera"></span>
+    Conectar Instagram (sin página de Facebook)
+  </button>
   <button class="btn-secondary" onclick="loadAccounts()">
-    ↻ Actualizar
+    <span data-icon="refresh"></span> Actualizar
   </button>
   <button class="btn-secondary" style="border-color:#e74c3c;color:#e74c3c;" onclick="disconnectAll()">
-    ✕ Desconectar Todo
+    <span data-icon="x"></span> Desconectar Todo
   </button>
 </div>
 
 <div class="info-banner">
-  <span class="info-icon">ℹ️</span>
+  <span class="info-icon" data-icon="info"></span>
   <div>
     <strong>¿Cómo funciona?</strong>
     Al hacer clic en "Conectar", se abrirá el login oficial de Facebook. 
@@ -252,11 +256,11 @@
     </div>
 
     <div class="settings-card">
-      <h2 class="settings-title">🖼 Portada</h2>
+      <h2 class="settings-title"><span data-icon="image"></span> Portada</h2>
       <p class="settings-desc">Imagen tipo banner (820×312px, proporción Facebook)</p>
       <div id="coverPreviewWrap" style="width:100%;max-width:820px;height:180px;border-radius:12px;overflow:hidden;background:#f0f0f0;display:flex;align-items:center;justify-content:center;margin-bottom:12px;border:2px dashed var(--border);cursor:pointer;" onclick="document.getElementById('coverInput').click()">
         <img id="coverPreview" src="" style="width:100%;height:100%;object-fit:cover;display:none;">
-        <span id="coverPlaceholder" style="color:var(--text2);font-size:0.9rem;">📷 Clic para subir imagen de portada</span>
+        <span id="coverPlaceholder" style="color:var(--text2);font-size:0.9rem;"><span data-icon="camera"></span> Clic para subir imagen de portada</span>
       </div>
       <input type="file" id="coverInput" accept="image/*" style="display:none" onchange="previewCover(this)">
       <button onclick="document.getElementById('coverInput').click()" class="btn-secondary" style="margin-right:8px;">Subir imagen</button>
@@ -264,17 +268,17 @@
     </div>
 
     <div class="settings-card">
-      <h2 class="settings-title">📝 Título del reporte</h2>
+      <h2 class="settings-title"><span data-icon="edit"></span> Título del reporte</h2>
       <input type="text" id="pdfTitle" placeholder="Ej: Programación de Redes Sociales" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
     </div>
 
     <div class="settings-card">
-      <h2 class="settings-title">📄 Pie de página</h2>
+      <h2 class="settings-title"><span data-icon="fileText"></span> Pie de página</h2>
       <input type="text" id="pdfFooter" placeholder="Ej: © 2025 Mi Empresa — Confidencial" class="date-input" style="width:100%;max-width:500px;padding:10px 14px;font-size:1rem;">
     </div>
 
     <div class="settings-card">
-      <h2 class="settings-title">✅ Campos a mostrar en cada post</h2>
+      <h2 class="settings-title"><span data-icon="checkSquare"></span> Campos a mostrar en cada post</h2>
       <div style="display:flex;flex-direction:column;gap:10px;margin-top:8px;">
         <label class="settings-toggle"><input type="checkbox" id="showImage" checked> Imagen / Video</label>
         <label class="settings-toggle"><input type="checkbox" id="showCuenta" checked> Nombre de cuenta</label>
@@ -284,7 +288,7 @@
       </div>
     </div>
 
-    <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;">💾 Guardar ajustes</button>
+    <button onclick="saveExportSettings()" style="padding:0.75rem 2rem;background:var(--accent);color:white;border:none;border-radius:10px;cursor:pointer;font-weight:700;font-size:1rem;"><span data-icon="save"></span> Guardar ajustes</button>
   </section>
 
 </main>
@@ -293,7 +297,7 @@
 
 <div id="toastContainer"></div>
 
-<script src="script.js?v=2"></script>
+<script src="script.js?v=3"></script>
 
 </body>
 </html>
