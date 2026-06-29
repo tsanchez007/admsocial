@@ -1,4 +1,5 @@
 import mysql from 'mysql2/promise';
+import { nowAsUTCStorageString } from './_dateUtils.js';
 
 async function uploadBase64ToImgbb(base64) {
     const apiKey = process.env.IMGBB_API_KEY;
@@ -135,9 +136,10 @@ export default async function handler(req, res) {
         user: process.env.DB_USER,
         password: process.env.DB_PASSWORD,
         database: process.env.DB_NAME,
+        timezone: 'Z',
     });
     try {
-        const now = new Date().toISOString().slice(0, 16);
+        const now = nowAsUTCStorageString().slice(0, 16);
         const [posts] = await db.query(
             "SELECT * FROM publicaciones WHERE estado = 'pendiente' AND substr(fecha_programada, 1, 16) <= ?",
             [now]

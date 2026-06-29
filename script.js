@@ -1,3 +1,58 @@
+// ============================================================
+// Utilidades de fecha/hora — zona horaria fija: América/Santo_Domingo (UTC-4, sin horario de verano)
+// CONVENCIÓN: fecha_programada viaja y se guarda SIEMPRE en UTC real.
+// Estas funciones son el único lugar donde se convierte entre la hora que
+// el usuario ve/elige (hora de Santo Domingo) y el valor UTC del servidor.
+// ============================================================
+const RD_OFFSET_HOURS = 4; // Santo Domingo = UTC-4 todo el año
+
+// "YYYY-MM-DDTHH:MM" (hora de Santo Domingo, tal como sale de un <input type="datetime-local">)
+// -> "YYYY-MM-DD HH:MM:SS" en UTC, listo para guardar en la base de datos.
+function rdInputValueToUTCString(inputValue) {
+    if (!inputValue) return '';
+    const [datePart, timePart] = inputValue.split('T');
+    const [y, m, d] = datePart.split('-').map(Number);
+    const [h, mi] = (timePart || '00:00').split(':').map(Number);
+    const utcMs = Date.UTC(y, m - 1, d, h + RD_OFFSET_HOURS, mi, 0);
+    return new Date(utcMs).toISOString().slice(0, 19).replace('T', ' ');
+}
+
+// Un objeto Date (instante real, ej. "ahora") -> "YYYY-MM-DD HH:MM:SS" en UTC para guardar.
+function dateToUTCStorageString(dateObj) {
+    return dateObj.toISOString().slice(0, 19).replace('T', ' ');
+}
+
+// Valor UTC guardado en la base de datos -> "YYYY-MM-DDTHH:MM" en hora de Santo Domingo,
+// para precargar un <input type="datetime-local">.
+function utcStringToRDInputValue(utcStr) {
+    if (!utcStr) return '';
+    const d = new Date(utcStr);
+    if (isNaN(d.getTime())) return '';
+    const rd = new Date(d.getTime() - RD_OFFSET_HOURS * 3600000);
+    const pad = n => String(n).padStart(2, '0');
+    return `${rd.getUTCFullYear()}-${pad(rd.getUTCMonth() + 1)}-${pad(rd.getUTCDate())}T${pad(rd.getUTCHours())}:${pad(rd.getUTCMinutes())}`;
+}
+
+// Valor UTC guardado en la base de datos -> texto legible en hora de Santo Domingo,
+// sin importar en qué zona horaria esté configurado el navegador de quien lo ve.
+function formatRD(utcStr, opts) {
+    if (!utcStr) return '';
+    const d = new Date(utcStr);
+    if (isNaN(d.getTime())) return '';
+    return d.toLocaleString('es-DO', { ...opts, timeZone: 'America/Santo_Domingo' });
+}
+
+// Valor UTC guardado en la base de datos -> "YYYY-MM-DD" (fecha calendario en Santo Domingo),
+// usado por los filtros "Desde" / "Hasta".
+function rdDateOnly(utcStr) {
+    if (!utcStr) return '';
+    const d = new Date(utcStr);
+    if (isNaN(d.getTime())) return '';
+    const rd = new Date(d.getTime() - RD_OFFSET_HOURS * 3600000);
+    const pad = n => String(n).padStart(2, '0');
+    return `${rd.getUTCFullYear()}-${pad(rd.getUTCMonth() + 1)}-${pad(rd.getUTCDate())}`;
+}
+
 document.addEventListener('DOMContentLoaded', () => {
     console.log("Script cargado y listo ✅");
 
@@ -291,7 +346,7 @@ function applyFilter() {
     const from = document.getElementById('filterFrom').value;
     const to = document.getElementById('filterTo').value;
     renderPosts(allPosts.filter(post => {
-        const fecha = post.fecha_programada?.slice(0,10);
+        const fecha = rdDateOnly(post.fecha_programada);
         if (from && fecha < from) return false;
         if (to && fecha > to) return false;
         return true;
@@ -310,7 +365,7 @@ function exportPDF() {
     let posts = allPosts;
     if (from || to) {
         posts = allPosts.filter(post => {
-            const fecha = post.fecha_programada?.slice(0,10);
+            const fecha = rdDateOnly(post.fecha_programada);
             if (from && fecha < from) return false;
             if (to && fecha > to) return false;
             return true;
@@ -339,7 +394,7 @@ function exportPDF() {
     const win = window.open('', '_blank');
     const mediaUrls = [];
     const rows = posts.map(post => {
-        const fecha = new Date(post.fecha_programada).toLocaleString('es-DO',{dateStyle:'full',timeStyle:'short'});
+        const fecha = formatRD(post.fecha_programada, {dateStyle:'full',timeStyle:'short'});
         const mediaRaw = post.imagen_url || '';
         const isVideo = mediaRaw.startsWith('data:video') || mediaRaw.match(/\.(mp4|mov|webm)/i);
         const mediaHtml = mediaRaw
@@ -436,7 +491,7 @@ function renderPosts(posts) {
                 </div>
                 <p class="post-text">${post.contenido||'<em style="opacity:0.5">Sin texto</em>'}</p>
                 <div class="post-footer">
-                    <span class="post-date-badge">📅 ${new Date(post.fecha_programada).toLocaleString('es-DO',{dateStyle:'medium',timeStyle:'short'})}</span>
+                    <span class="post-date-badge">📅 ${formatRD(post.fecha_programada, {dateStyle:'medium',timeStyle:'short'})}</span>
                     <div class="post-actions">
                         <button onclick="editPost(${post.id})" class="btn-action btn-edit">✏️ Editar</button>
                         <button onclick="deletePost(${post.id})" class="btn-action btn-delete">🗑 Eliminar</button>
@@ -623,7 +678,9 @@ async function schedulePost(publishNow = false) {
     const min = document.getElementById("scheduleMin").value;
     const ampm = document.getElementById("scheduleAmPm").value;
     const hour24 = ampm === "PM" ? (hour === 12 ? 12 : hour + 12) : (hour === 12 ? 0 : hour);
-    const scheduledAt = publishNow ? new Date(Date.now() - 60000).toISOString().slice(0,19) : dateVal + "T" + String(hour24).padStart(2,"0") + ":" + min + ":00";
+    const scheduledAt = publishNow
+        ? dateToUTCStorageString(new Date(Date.now() - 60000))
+        : rdInputValueToUTCString(dateVal + "T" + String(hour24).padStart(2,"0") + ":" + min);
     const instagram = document.getElementById('instagramCheck').checked;
     const facebook = document.getElementById('facebookCheck').checked;
     const fileInput = document.getElementById('fileInput');
@@ -930,7 +987,7 @@ async function editPost(id) {
         <div style="background:var(--bg2);border-radius:12px;padding:2rem;width:90%;max-width:500px;display:flex;flex-direction:column;gap:1rem;">
             <h3 style="margin:0;">✏️ Editar Publicación</h3>
             <textarea id="editTexto" rows="4" style="width:100%;padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);resize:vertical;">${contenido}</textarea>
-            <input type="datetime-local" id="editFecha" value="${fecha.slice(0,16)}" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);"/>
+            <input type="datetime-local" id="editFecha" value="${utcStringToRDInputValue(fecha)}" style="padding:10px;border-radius:8px;border:1px solid var(--border);background:var(--bg);color:var(--text);"/>
             <div>
                 <label style="font-size:0.85rem;color:var(--text2);">Cambiar imagen (opcional)</label>
                 <input type="file" id="editImagen" accept="image/*,video/*" style="margin-top:6px;width:100%;"/>
@@ -960,7 +1017,7 @@ async function editPost(id) {
                 reader.readAsDataURL(fileInput.files[0]);
             });
         }
-        const ahora = new Date(Date.now() - 60000).toISOString().slice(0,16) + ':00';
+        const ahora = dateToUTCStorageString(new Date(Date.now() - 60000));
         const patchRes = await fetch(`/api/posts/${id}`, {
             method: 'PATCH',
             headers: {'Content-Type':'application/json'},
@@ -994,7 +1051,7 @@ async function editPost(id) {
 
     document.getElementById('saveEdit').onclick = async () => {
         const nuevoTexto = document.getElementById('editTexto').value;
-        const nuevaFecha = document.getElementById('editFecha').value + ':00';
+        const nuevaFecha = rdInputValueToUTCString(document.getElementById('editFecha').value);
         const fileInput = document.getElementById('editImagen');
 
         let image_base64 = null;
